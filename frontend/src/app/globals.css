@@ -1,0 +1,223 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── StreamSense Design Tokens (Tailwind v4) ── */
+@theme inline {
+  /* shadcn semantic color bindings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+
+  /* Font families */
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-dm-serif-display);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-display);
+
+  /* Radius */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* ── River Teal (Primary) ── */
+  --color-stream-50: #f0f9f6;
+  --color-stream-100: #d5f0e8;
+  --color-stream-200: #aae0d1;
+  --color-stream-300: #73c9b4;
+  --color-stream-400: #45ac93;
+  --color-stream-500: #2d9079;
+  --color-stream-600: #217462;
+  --color-stream-700: #1d5e51;
+  --color-stream-800: #1a4b42;
+  --color-stream-900: #173f37;
+  --color-stream-950: #0a2420;
+
+  /* ── Forest Moss (Secondary) ── */
+  --color-moss-50: #f5f7f0;
+  --color-moss-100: #e8ecdd;
+  --color-moss-200: #d3dabf;
+  --color-moss-300: #b5c097;
+  --color-moss-400: #9baa76;
+  --color-moss-500: #7f9058;
+  --color-moss-600: #637244;
+  --color-moss-700: #4d5837;
+  --color-moss-800: #404830;
+  --color-moss-900: #363d2a;
+  --color-moss-950: #1b2014;
+
+  /* ── Sunset Amber (Accent) ── */
+  --color-amber-50: #fefbf0;
+  --color-amber-100: #fdf3d0;
+  --color-amber-200: #fbe5a0;
+  --color-amber-300: #f8d166;
+  --color-amber-400: #f5bb3a;
+  --color-amber-500: #eca216;
+  --color-amber-600: #d07c0e;
+  --color-amber-700: #ad5a10;
+  --color-amber-800: #8c4714;
+  --color-amber-900: #743b14;
+  --color-amber-950: #431d06;
+
+  /* ── Warm Stone (Neutral) ── */
+  --color-stone-50: #faf9f7;
+  --color-stone-100: #f3f1ed;
+  --color-stone-200: #e8e4dc;
+  --color-stone-300: #d4cec2;
+  --color-stone-400: #b8b0a0;
+  --color-stone-500: #a49a88;
+  --color-stone-600: #8a7f6e;
+  --color-stone-700: #736a5c;
+  --color-stone-800: #615a4f;
+  --color-stone-900: #524c44;
+  --color-stone-950: #2c2824;
+
+  /* ── Semantic Colors ── */
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #dc4446;
+  --color-danger-700: #b91c1c;
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-700: #15803d;
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #f59e0b;
+  --color-warning-700: #b45309;
+
+  /* ── Surface Colors ── */
+  --color-surface: #ffffff;
+  --color-surface-hover: #f3f1ed;
+
+  /* ── Custom Border Radius ── */
+  --radius-cozy: 12px;
+  --radius-cozy-lg: 16px;
+  --radius-cozy-xl: 20px;
+  --radius-pill: 9999px;
+
+  /* ── Custom Shadows ── */
+  --shadow-cozy-sm: 0 1px 3px 0 rgba(82, 76, 68, 0.06), 0 1px 2px -1px rgba(82, 76, 68, 0.06);
+  --shadow-cozy: 0 4px 12px -2px rgba(82, 76, 68, 0.08), 0 2px 6px -2px rgba(82, 76, 68, 0.04);
+  --shadow-cozy-lg: 0 10px 24px -4px rgba(82, 76, 68, 0.1), 0 4px 10px -4px rgba(82, 76, 68, 0.04);
+  --shadow-cozy-xl: 0 20px 40px -8px rgba(82, 76, 68, 0.12);
+  --shadow-inner-cozy: inset 0 2px 4px 0 rgba(82, 76, 68, 0.04);
+
+  /* ── Custom Spacing ── */
+  --spacing-18: 4.5rem;
+  --spacing-22: 5.5rem;
+}
+
+/* ── StreamSense Light Theme (default) ── */
+:root {
+  --background: #faf9f7;
+  --foreground: #524c44;
+  --card: #ffffff;
+  --card-foreground: #524c44;
+  --popover: #ffffff;
+  --popover-foreground: #524c44;
+  --primary: #2d9079;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f1ed;
+  --secondary-foreground: #615a4f;
+  --muted: #f3f1ed;
+  --muted-foreground: #8a7f6e;
+  --accent: #f5f7f0;
+  --accent-foreground: #4d5837;
+  --destructive: #dc4446;
+  --border: #e8e4dc;
+  --input: #e8e4dc;
+  --ring: #2d9079;
+  --chart-1: #2d9079;
+  --chart-2: #7f9058;
+  --chart-3: #eca216;
+  --chart-4: #45ac93;
+  --chart-5: #9baa76;
+  --radius: 0.75rem;
+  --sidebar: #f3f1ed;
+  --sidebar-foreground: #524c44;
+  --sidebar-primary: #2d9079;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e4dc;
+  --sidebar-accent-foreground: #615a4f;
+  --sidebar-border: #d4cec2;
+  --sidebar-ring: #2d9079;
+}
+
+/* ── Dark Theme (optional polish) ── */
+.dark {
+  --background: #2c2824;
+  --foreground: #f3f1ed;
+  --card: #3a3530;
+  --card-foreground: #f3f1ed;
+  --popover: #3a3530;
+  --popover-foreground: #f3f1ed;
+  --primary: #45ac93;
+  --primary-foreground: #0a2420;
+  --secondary: #524c44;
+  --secondary-foreground: #f3f1ed;
+  --muted: #524c44;
+  --muted-foreground: #b8b0a0;
+  --accent: #363d2a;
+  --accent-foreground: #e8ecdd;
+  --destructive: #dc4446;
+  --border: #615a4f;
+  --input: #615a4f;
+  --ring: #45ac93;
+  --chart-1: #45ac93;
+  --chart-2: #9baa76;
+  --chart-3: #f5bb3a;
+  --chart-4: #73c9b4;
+  --chart-5: #b5c097;
+  --sidebar: #3a3530;
+  --sidebar-foreground: #f3f1ed;
+  --sidebar-primary: #45ac93;
+  --sidebar-primary-foreground: #0a2420;
+  --sidebar-accent: #524c44;
+  --sidebar-accent-foreground: #f3f1ed;
+  --sidebar-border: #615a4f;
+  --sidebar-ring: #45ac93;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
