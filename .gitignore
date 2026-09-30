@@ -43,3 +43,6 @@ coverage/
 *.tgz
 .vercel
 .railway
+
+# Internal Research & Intelligence
+research/
