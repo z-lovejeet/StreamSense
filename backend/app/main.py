@@ -9,19 +9,34 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from app.config import settings
+from app.database import engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application startup and shutdown events."""
+    """Application startup and shutdown events.
+
+    On startup: verify database connectivity via a SELECT 1 probe.
+    On shutdown: dispose the engine connection pool.
+    """
     print("🌊 StreamSense API starting up...")
+    # Verify database connectivity
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        print("✅ Database connected")
+    except Exception as e:
+        print(f"⚠️  Database connection failed: {e}")
+        print("   The API will start but database-dependent endpoints will fail.")
+
     yield
-    print("🌊 StreamSense API shutting down...")
+
+    # Cleanup
+    await engine.dispose()
+    print("🌊 StreamSense API shut down.")
 
 
 app = FastAPI(
@@ -38,7 +53,7 @@ app = FastAPI(
 # CORS — allow frontend origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:3000")],
+    allow_origins=[settings.frontend_url],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,5 +77,5 @@ async def api_health_check():
     return {
         "status": "ok",
         "version": "0.1.0",
-        "environment": os.getenv("APP_ENV", "dev"),
+        "environment": settings.app_env,
     }
