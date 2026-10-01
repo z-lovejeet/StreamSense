@@ -11,8 +11,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from app.api.router import api_router
 from app.config import settings
 from app.database import engine
+from app.middleware.errors import register_exception_handlers
 
 
 @asynccontextmanager
@@ -59,6 +61,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register global exception handlers (consistent JSON error format)
+register_exception_handlers(app)
+
+# Mount all API routes under /api/v1
+app.include_router(api_router)
+
 
 @app.get("/health")
 async def health_check():
@@ -68,14 +76,4 @@ async def health_check():
         "service": "streamsense-api",
         "version": "0.1.0",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
-
-
-@app.get("/api/v1/health")
-async def api_health_check():
-    """API v1 health check — used by frontend to verify backend connectivity."""
-    return {
-        "status": "ok",
-        "version": "0.1.0",
-        "environment": settings.app_env,
     }
