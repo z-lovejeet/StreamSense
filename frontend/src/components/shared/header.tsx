@@ -4,6 +4,8 @@ import { useState } from "react"
 import { Menu, LogOut, Waves } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { Sidebar } from "@/components/shared/sidebar"
+import { ResearcherSidebar } from "@/components/shared/researcher-sidebar"
+import { NotificationBell } from "@/components/shared/notification-bell"
 import {
   Sheet,
   SheetContent,
@@ -34,8 +36,8 @@ export function Header({ user }: { user: User }) {
               </button>
             }
           />
-          <SheetContent side="left" className="w-[260px] p-0 bg-stone-50" showCloseButton={false}>
-            <Sidebar />
+          <SheetContent side="left" className={`w-[260px] p-0 ${user.role === "researcher" ? "bg-stone-900" : "bg-stone-50"}`} showCloseButton={false}>
+            {user.role === "researcher" ? <ResearcherSidebar /> : <Sidebar />}
           </SheetContent>
         </Sheet>
 
@@ -48,8 +50,9 @@ export function Header({ user }: { user: User }) {
         </div>
       </div>
 
-      {/* Right: User + Sign out */}
+      {/* Right: Notifications + User + Sign out */}
       <div className="flex items-center gap-3">
+        {user.role === "researcher" && <NotificationBell />}
         <div className="flex items-center gap-2.5">
           {user.avatar_url ? (
             <img
