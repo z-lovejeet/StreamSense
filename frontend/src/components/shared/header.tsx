@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Menu, LogOut, Waves } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { Sidebar } from "@/components/shared/sidebar"
@@ -21,8 +23,10 @@ import type { User } from "@/types"
  */
 export function Header({ user }: { user: User }) {
   const { signOut } = useAuth()
+  const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [imageError, setImageError] = useState(false)
+  const isResearcherRoute = pathname?.startsWith("/researcher")
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-stone-200 bg-surface/80 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
@@ -37,8 +41,8 @@ export function Header({ user }: { user: User }) {
               </button>
             }
           />
-          <SheetContent side="left" className={`w-[260px] p-0 ${user.role === "researcher" ? "bg-stone-900" : "bg-stone-50"}`} showCloseButton={false}>
-            {user.role === "researcher" ? <ResearcherSidebar /> : <Sidebar />}
+          <SheetContent side="left" className={`w-[260px] p-0 ${isResearcherRoute ? "bg-stone-900" : "bg-stone-50"}`} showCloseButton={false}>
+            {isResearcherRoute ? <ResearcherSidebar /> : <Sidebar />}
           </SheetContent>
         </Sheet>
 
@@ -51,10 +55,30 @@ export function Header({ user }: { user: User }) {
         </div>
       </div>
 
-      {/* Right: Notifications + User + Sign out */}
+      {/* Right: Portal Switcher + Notifications + User + Sign out */}
       <div className="flex items-center gap-3">
-        {user.role === "researcher" && <NotificationBell />}
-        <div className="flex items-center gap-2.5">
+        {/* Portal Switcher Button */}
+        {isResearcherRoute ? (
+          <Link
+            href="/volunteer/dashboard"
+            className="flex items-center gap-1.5 rounded-pill border border-stream-200 bg-stream-50 px-3 py-1 text-xs font-semibold text-stream-700 shadow-cozy-sm transition-all hover:bg-stream-100 hover:shadow-cozy hover:-translate-y-0.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-stream-500 animate-pulse" />
+            Volunteer View &rarr;
+          </Link>
+        ) : (
+          <Link
+            href="/researcher/dashboard"
+            className="flex items-center gap-1.5 rounded-pill border border-stone-800 bg-stone-900 px-3 py-1 text-xs font-semibold text-stone-100 shadow-cozy-sm transition-all hover:bg-stone-800 hover:shadow-cozy hover:-translate-y-0.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            Researcher Portal &rarr;
+          </Link>
+        )}
+
+        {isResearcherRoute && <NotificationBell />}
+
+        <div className="flex items-center gap-2">
           {user.avatar_url && !imageError ? (
             <img
               src={user.avatar_url}
@@ -69,9 +93,14 @@ export function Header({ user }: { user: User }) {
               {user.full_name?.charAt(0)?.toUpperCase() || "U"}
             </div>
           )}
-          <span className="hidden text-sm font-medium text-stone-700 sm:block">
-            {user.full_name}
-          </span>
+          <div className="hidden sm:flex flex-col">
+            <span className="text-xs font-medium text-stone-800 leading-tight">
+              {user.full_name}
+            </span>
+            <span className="text-[10px] text-stone-400 capitalize">
+              {user.role}
+            </span>
+          </div>
         </div>
 
         <button

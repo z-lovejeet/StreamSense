@@ -13,11 +13,16 @@ import { Loader2, Waves } from "lucide-react"
 export default function LoginPage() {
   const { signIn } = useAuth()
   const [signingIn, setSigningIn] = useState<string | null>(null)
+  const [targetRole, setTargetRole] = useState<"volunteer" | "researcher">("researcher")
 
   const handleSignIn = async (provider: "google" | "github") => {
     setSigningIn(provider)
     try {
-      await signIn(provider)
+      const nextPath =
+        targetRole === "researcher"
+          ? "/researcher/dashboard"
+          : "/volunteer/dashboard"
+      await signIn(provider, nextPath)
     } catch (err) {
       console.error("Sign-in failed:", err)
       setSigningIn(null)
@@ -39,9 +44,45 @@ export default function LoginPage() {
           Welcome to StreamSense
         </h1>
         <p className="text-sm text-stone-500 leading-relaxed">
-          Join local naturalists monitoring stream health.
+          AI-powered freshwater ecological monitoring.
           <br />
-          Your observations help protect community waterways.
+          Bridging citizen science and environmental public health.
+        </p>
+      </div>
+
+      {/* Role Selection Tabs */}
+      <div className="space-y-2">
+        <label className="text-xs font-semibold text-stone-500 block">
+          Select Your Access Portal:
+        </label>
+        <div className="grid grid-cols-2 gap-2 rounded-cozy bg-stone-100 p-1">
+          <button
+            type="button"
+            onClick={() => setTargetRole("volunteer")}
+            className={`flex items-center justify-center gap-1.5 rounded-cozy py-2 text-xs font-semibold transition-all ${
+              targetRole === "volunteer"
+                ? "bg-surface text-stream-700 shadow-cozy-sm"
+                : "text-stone-500 hover:text-stone-800"
+            }`}
+          >
+            Volunteer Portal
+          </button>
+          <button
+            type="button"
+            onClick={() => setTargetRole("researcher")}
+            className={`flex items-center justify-center gap-1.5 rounded-cozy py-2 text-xs font-semibold transition-all ${
+              targetRole === "researcher"
+                ? "bg-stone-900 text-stone-100 shadow-cozy-sm"
+                : "text-stone-500 hover:text-stone-800"
+            }`}
+          >
+            Researcher Portal
+          </button>
+        </div>
+        <p className="text-[11px] text-stone-400 text-center">
+          {targetRole === "researcher"
+            ? "Expert review queue, validation actions, analytics & FHIR export"
+            : "Stream photo submissions, AI impact receipts & community map"}
         </p>
       </div>
 
