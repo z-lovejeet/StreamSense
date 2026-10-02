@@ -86,3 +86,25 @@ class Observation(Base):
         "FHIRResource", back_populates="observation", uselist=False
     )
     notifications = relationship("Notification", back_populates="observation")
+
+    @property
+    def volunteer_name(self) -> str | None:
+        try:
+            return self.user.full_name if self.user else None
+        except Exception:
+            return None
+
+    @property
+    def volunteer_email(self) -> str | None:
+        try:
+            return self.user.email if self.user else None
+        except Exception:
+            return None
+
+    @property
+    def volunteer_avatar_url(self) -> str | None:
+        try:
+            return self.user.avatar_url if self.user else None
+        except Exception:
+            return None
+

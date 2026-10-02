@@ -37,6 +37,9 @@ class ObservationResponse(BaseModel):
 
     id: uuid.UUID
     user_id: uuid.UUID
+    volunteer_name: str | None = None
+    volunteer_email: str | None = None
+    volunteer_avatar_url: str | None = None
     image_url: str
     image_thumbnail_url: str | None = None
     description: str | None = None
