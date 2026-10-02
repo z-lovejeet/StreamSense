@@ -14,7 +14,6 @@ import {
   Clock,
   ArrowUpRight,
   ChevronRight,
-  Layers,
   Leaf,
 } from "lucide-react"
 import Link from "next/link"
