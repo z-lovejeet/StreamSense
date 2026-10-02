@@ -15,9 +15,7 @@ import {
   Bug,
   Camera,
   Database,
-  Compass,
   FileCheck,
-  Sparkles,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"

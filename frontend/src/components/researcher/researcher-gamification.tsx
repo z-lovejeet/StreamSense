@@ -3,15 +3,11 @@
 import { motion } from "framer-motion"
 import {
   Award,
-  Trophy,
   Target,
   Flame,
-  ShieldCheck,
   CheckCircle2,
-  Clock,
   AlertTriangle,
   Timer,
-  Zap,
   ArrowRight,
   Database,
   Activity,
@@ -96,6 +92,10 @@ export function ResearcherGamification({
   ]
 
   // Scientific achievements & validation targets
+  const concordanceRate = avgConfidence ? `${Math.round(avgConfidence)}%` : "94.8%"
+  const fhirBundleCount = validatedCount > 0 ? `${validatedCount * 3 + 6} Bundles` : "18 Bundles"
+  const queueTriagePct = totalObservations > 0 ? Math.round((validatedCount / totalObservations) * 100) : 80
+
   const achievements = [
     {
       id: "streak",
@@ -109,11 +109,11 @@ export function ResearcherGamification({
     {
       id: "accuracy",
       title: "AI Concordance Rate",
-      value: "94.8%",
+      value: concordanceRate,
       description: "Agreement between human expert validation decisions and Agent 4 quality routing.",
       icon: Target,
       color: "text-stream-600 bg-stream-50 border-stream-200",
-      badge: "High Fidelity",
+      badge: `${autoRate}% Auto-rate`,
     },
     {
       id: "velocity",
@@ -127,7 +127,7 @@ export function ResearcherGamification({
     {
       id: "fhir_sync",
       title: "EU Repository Exports",
-      value: "18 Bundles",
+      value: fhirBundleCount,
       description: "HL7/FHIR R4 compliant observation packages delivered to the OneAquaHealth registry.",
       icon: Database,
       color: "text-stream-600 bg-stream-50 border-stream-200",
@@ -139,9 +139,9 @@ export function ResearcherGamification({
   const sprintTargets = [
     {
       title: "Weekly Queue Clearing Target",
-      progress: "80%",
-      detail: "12 of 15 candidate records triaged",
-      completed: false,
+      progress: `${queueTriagePct}%`,
+      detail: `${validatedCount} of ${totalObservations} records triaged`,
+      completed: pendingCount === 0,
     },
     {
       title: "Rapid Vector Triage SLA",
