@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Sparkles, HeartPulse, Camera, ClipboardList, CheckCircle2 } from "lucide-react"
+import { DipteraCastCard, derivePrediction } from "@/components/shared/dipteracast-card"
 import type { Observation } from "@/types"
 
 /**
@@ -19,6 +20,10 @@ export function ImpactReceipt({
   const isValidated =
     observation.status === "auto_validated" ||
     observation.status === "expert_validated"
+
+  const vectorPrediction = derivePrediction(
+    observation.top_species,
+  )
 
   return (
     <motion.div
@@ -65,6 +70,11 @@ export function ImpactReceipt({
             {observation.impact_headline}
           </p>
         </div>
+      )}
+
+      {/* DipteraCAST Vector Forecast */}
+      {vectorPrediction && (
+        <DipteraCastCard prediction={vectorPrediction} />
       )}
 
       {/* Footer — Quality + FHIR */}
