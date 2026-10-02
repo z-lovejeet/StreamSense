@@ -5,6 +5,15 @@ import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import type { GeoJSONFeatureCollection } from "@/types"
 
+interface MapFeatureProperties {
+  species?: string | null
+  confidence?: number | null
+  location_name?: string | null
+  pilot_city?: string | null
+  observed_at?: string | null
+  [key: string]: unknown
+}
+
 /**
  * BMWP-based pin color mapping:
  *   Green (≥7): EPT sensitive (Ephemeroptera, Plecoptera, Trichoptera, Heptageniidae, Leuctridae)
@@ -97,8 +106,8 @@ export function ObservationMap({
 
     geojson.features.forEach((feature) => {
       const [lng, lat] = feature.geometry.coordinates
-      const props = feature.properties as Record<string, any>
-      const color = getPinColor(props.species)
+      const props = feature.properties as MapFeatureProperties
+      const color = getPinColor(props.species || null)
 
       const marker = L.marker([lat, lng], {
         icon: createCircleIcon(color),

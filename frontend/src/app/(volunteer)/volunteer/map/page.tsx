@@ -137,8 +137,14 @@ export default function VolunteerMapPage() {
         transition={{ delay: 0.2, duration: 0.4 }}
         className="overflow-hidden rounded-cozy-lg border border-stone-100 bg-surface shadow-cozy"
       >
-        <div className="p-1">
-          <ObservationMap geojson={geojson} />
+        <div className="p-1 min-h-[300px]">
+          {loading && !geojson ? (
+            <div className="flex h-[300px] lg:h-[500px] items-center justify-center rounded-cozy-lg bg-stone-50 text-stone-400 text-sm">
+              Loading pilot city observations...
+            </div>
+          ) : (
+            <ObservationMap geojson={geojson} />
+          )}
         </div>
 
         {/* Legend */}
