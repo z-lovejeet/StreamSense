@@ -1,8 +1,8 @@
 """
-StreamSense Demo Data Seeder — Phase 6 Task 6.9
+StreamSense Demo Data Seeder — Real Stream & Lake Images
 
-Inserts 5 realistic observations across the 5 OneAquaHealth pilot cities
-(Coimbra, Toulouse, Benevento, Ghent, Oslo) using the SQLAlchemy ORM.
+Inserts realistic, verified observations across the 5 OneAquaHealth pilot cities
+(Coimbra, Toulouse, Benevento, Ghent, Oslo) with real freshwater stream and lake imagery.
 
 Usage:
     cd backend
@@ -13,17 +13,18 @@ import asyncio
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from app.database import async_session
 from app.models.observation import Observation
 from app.models.enums import ObservationStatus
 from app.models.user import User
 
 
-# ── Demo Observations across the 5 OneAquaHealth Pilot Cities ─────────
+# ── Demo Observations with REAL Freshwater Stream & Lake Imagery ──────
 DEMO_DATA = [
     {
-        "image_url": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800&auto=format&fit=crop",
+        # Crystal clear rushing stream flowing over mossy riverbed rocks
+        "image_url": "/images/observations/coimbra_stream.jpg",
         "description": "Crystal clear water with many mayfly nymphs clinging to rocks. Fast-flowing section near the bridge. Water is cold and transparent, no algae visible.",
         "latitude": 40.2033,
         "longitude": -8.4103,
@@ -40,7 +41,8 @@ DEMO_DATA = [
         "pipeline_time_seconds": 3.8,
     },
     {
-        "image_url": "https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=800&auto=format&fit=crop",
+        # Calm river canal waterway reflecting trees
+        "image_url": "/images/observations/toulouse_stream.jpg",
         "description": "Slow-moving murky water with small red midge larvae in the sediment. Moderate algae growth along the stone bank.",
         "latitude": 43.6047,
         "longitude": 1.4442,
@@ -57,24 +59,26 @@ DEMO_DATA = [
         "pipeline_time_seconds": 4.2,
     },
     {
-        "image_url": "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?w=800&auto=format&fit=crop",
-        "description": "Standing water near the stormwater outlet. Detected mosquito larvae wriggling near the surface. Water is dark and stagnant with organic debris.",
+        # Freshwater river stream with pebble gravel bed and clean sunlit water
+        "image_url": "/images/observations/benevento_stream.jpg",
+        "description": "Shallow gravel stream riffle near the riverbank. Found small mayfly nymphs swimming among smooth river pebbles. Cool, well-oxygenated water.",
         "latitude": 41.1306,
         "longitude": 14.7681,
         "location_name": "Fiume Calore, Benevento",
         "pilot_city": "Benevento",
         "days_ago": 3,
-        "status": ObservationStatus.PENDING_REVIEW,
-        "confidence_score": 48,
-        "routing": "expert_review",
-        "top_species": "Culicidae",
-        "top_confidence": 0.48,
-        "impact_text": "Important find! Mosquito larvae in stagnant water is an early warning indicator. We have flagged this for expert review to assess vector-borne disease risk in Benevento.",
-        "impact_headline": "Disease Vector Alert",
-        "pipeline_time_seconds": 5.1,
+        "status": ObservationStatus.AUTO_VALIDATED,
+        "confidence_score": 86,
+        "routing": "auto_validate",
+        "top_species": "Baetidae",
+        "top_confidence": 0.86,
+        "impact_text": "Excellent observation! Baetid mayfly nymphs are key bioindicators of freshwater ecological health. Your report confirms steady stream oxygenation along the Fiume Calore in Benevento.",
+        "impact_headline": "Healthy Stream Section Confirmed",
+        "pipeline_time_seconds": 3.9,
     },
     {
-        "image_url": "https://images.unsplash.com/photo-1544979590-37e9b47eb705?w=800&auto=format&fit=crop",
+        # Lush river stream flowing through green natural banks
+        "image_url": "/images/observations/ghent_stream.jpg",
         "description": "Fast-flowing stream under the old bridge. Found several caddisfly cases attached to submerged rocks. Water is clear and cool.",
         "latitude": 51.0543,
         "longitude": 3.7174,
@@ -91,7 +95,8 @@ DEMO_DATA = [
         "pipeline_time_seconds": 3.5,
     },
     {
-        "image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop",
+        # Shaded forest stream flowing over rocky rapids
+        "image_url": "/images/observations/oslo_stream.jpg",
         "description": "Cool, shaded stream section near the urban forest. Found freshwater shrimp under fallen leaves and mossy rocks. Clean, transparent water.",
         "latitude": 59.9139,
         "longitude": 10.7522,
@@ -111,65 +116,75 @@ DEMO_DATA = [
 
 
 async def seed_demo():
-    """Insert demo observations using SQLAlchemy ORM."""
+    """Seed or update demo observations with real stream imagery."""
     async with async_session() as session:
-        # Find first available user (or Lovejeet's user)
+        # Get active user
         user_result = await session.execute(
             select(User).order_by(User.created_at.desc())
         )
         user = user_result.scalars().first()
         if not user:
-            print("  ❌ No users found in database. Sign in first via Google/GitHub.")
+            print("  ❌ No users found in database.")
             return
 
-        print(f"  👤 Associating demo observations with user: {user.full_name} ({user.email})")
+        print(f"  👤 Seeding stream observations for: {user.full_name} ({user.email})")
 
-        seeded_count = 0
         now = datetime.now(timezone.utc)
 
+        # Upsert or replace pilot city demo observations
         for data in DEMO_DATA:
-            # Check if an observation at this location already exists
-            existing = await session.execute(
+            existing_result = await session.execute(
                 select(Observation).where(
                     Observation.pilot_city == data["pilot_city"],
                     Observation.location_name == data["location_name"],
                 )
             )
-            if existing.scalars().first():
-                print(f"  ⏭ Skipping {data['pilot_city']} — already seeded")
-                continue
+            obs = existing_result.scalars().first()
 
-            obs = Observation(
-                id=uuid.uuid4(),
-                user_id=user.id,
-                image_url=data["image_url"],
-                image_thumbnail_url=data["image_url"],
-                description=data["description"],
-                latitude=data["latitude"],
-                longitude=data["longitude"],
-                location_name=data["location_name"],
-                pilot_city=data["pilot_city"],
-                observed_at=now - timedelta(days=data["days_ago"]),
-                status=data["status"],
-                confidence_score=data["confidence_score"],
-                routing=data["routing"],
-                top_species=data["top_species"],
-                top_confidence=data["top_confidence"],
-                impact_text=data["impact_text"],
-                impact_headline=data["impact_headline"],
-                pipeline_time_seconds=data["pipeline_time_seconds"],
-                created_at=now - timedelta(days=data["days_ago"]),
-                updated_at=now - timedelta(days=data["days_ago"]),
-            )
-            session.add(obs)
-            seeded_count += 1
-            print(f"  ✅ Added: {data['top_species']} in {data['pilot_city']} ({data['status'].value})")
+            if obs:
+                # Update existing record with real stream photo and validated status
+                obs.image_url = data["image_url"]
+                obs.image_thumbnail_url = data["image_url"]
+                obs.description = data["description"]
+                obs.status = data["status"]
+                obs.confidence_score = data["confidence_score"]
+                obs.routing = data["routing"]
+                obs.top_species = data["top_species"]
+                obs.top_confidence = data["top_confidence"]
+                obs.impact_text = data["impact_text"]
+                obs.impact_headline = data["impact_headline"]
+                print(f"  🔄 Updated with real stream image: {data['pilot_city']} ({data['top_species']})")
+            else:
+                obs = Observation(
+                    id=uuid.uuid4(),
+                    user_id=user.id,
+                    image_url=data["image_url"],
+                    image_thumbnail_url=data["image_url"],
+                    description=data["description"],
+                    latitude=data["latitude"],
+                    longitude=data["longitude"],
+                    location_name=data["location_name"],
+                    pilot_city=data["pilot_city"],
+                    observed_at=now - timedelta(days=data["days_ago"]),
+                    status=data["status"],
+                    confidence_score=data["confidence_score"],
+                    routing=data["routing"],
+                    top_species=data["top_species"],
+                    top_confidence=data["top_confidence"],
+                    impact_text=data["impact_text"],
+                    impact_headline=data["impact_headline"],
+                    pipeline_time_seconds=data["pipeline_time_seconds"],
+                    created_at=now - timedelta(days=data["days_ago"]),
+                    updated_at=now - timedelta(days=data["days_ago"]),
+                )
+                session.add(obs)
+                print(f"  ✅ Added real stream observation: {data['pilot_city']} ({data['top_species']})")
 
         await session.commit()
-        print(f"\n🌱 Demo seeding complete: {seeded_count} new observations saved to database.")
+        print("\n🌊 Successfully refreshed all 5 demo observations with genuine stream and river photos.")
 
 
 if __name__ == "__main__":
-    print("🌊 StreamSense Demo Data Seeder")
+    print("🌊 StreamSense Real Stream Data Seeder")
     print("=" * 45)
     asyncio.run(seed_demo())
