@@ -31,7 +31,7 @@ export function Header({ user }: { user: User }) {
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger
             render={
-              <button className="lg:hidden rounded-cozy p-2 text-stone-600 hover:bg-stone-100 transition-colors">
+              <button className="lg:hidden rounded-cozy p-2 text-stone-600 hover:bg-stone-100 transition-colors" aria-label="Open navigation menu">
                 <Menu className="h-5 w-5" />
               </button>
             }
@@ -74,6 +74,7 @@ export function Header({ user }: { user: User }) {
           onClick={signOut}
           className="rounded-cozy p-2 text-stone-400 hover:bg-stone-100 hover:text-stone-600 transition-colors"
           title="Sign out"
+          aria-label="Sign out"
         >
           <LogOut className="h-4 w-4" />
         </button>
