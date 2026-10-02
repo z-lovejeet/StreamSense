@@ -112,8 +112,8 @@ export default function FHIRPage() {
           <h1 className="font-display text-2xl text-stone-800">
             FHIR Resources
           </h1>
-          <p className="mt-1 text-sm text-stone-500">
-            {total} FHIR R4 Observation resource{total !== 1 ? "s" : ""}
+          <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+            HL7 FHIR R4 clinical environmental resources adhering to the official OneAquaHealth profile (<code className="rounded bg-stone-100 px-1 py-0.5 text-xs font-mono text-stream-700">observation-indicators-oah</code>). Inspect generated JSON payloads, copy structured components, and batch export validated records directly to the European HAPI FHIR Sandbox.
           </p>
         </div>
 
