@@ -34,6 +34,7 @@ export function NotificationBell() {
         onClick={() => setShowDrop((v) => !v)}
         className="relative rounded-cozy p-2 text-stone-500 hover:bg-stone-100 hover:text-stone-700 transition-colors"
         title="Notifications"
+        aria-label={count > 0 ? `${count} pending notifications` : "Notifications"}
       >
         <Bell className="h-5 w-5" />
         {count > 0 && (
