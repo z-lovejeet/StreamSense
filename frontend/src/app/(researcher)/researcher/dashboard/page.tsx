@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Zap,
   Timer,
+  Bug,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
@@ -238,6 +239,45 @@ export default function ResearcherDashboard() {
                 : "—"
             }
           />
+        </div>
+      </motion.div>
+
+      {/* DipteraCAST Vector Risk Summary */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45, duration: 0.4 }}
+      >
+        <h2 className="font-display text-lg text-stone-800 mb-3">
+          <span className="flex items-center gap-2">
+            <Bug className="h-4 w-4 text-amber-500" />
+            DipteraCAST Vector Forecast
+          </span>
+        </h2>
+        <div className="rounded-cozy-lg border border-stone-100 bg-surface p-5 shadow-cozy-sm">
+          <p className="text-xs text-stone-500 mb-4">
+            Mock disease-vector risk predictions across pilot cities
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { city: "Coimbra", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+              { city: "Toulouse", risk: "Moderate", color: "bg-amber-50 text-amber-700 border-amber-200" },
+              { city: "Benevento", risk: "High", color: "bg-danger-50 text-danger-700 border-danger-200" },
+              { city: "Ghent", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+              { city: "Oslo", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+            ].map(({ city, risk, color }) => (
+              <div
+                key={city}
+                className={`rounded-cozy border p-3 ${color}`}
+              >
+                <p className="text-xs font-semibold">{city}</p>
+                <p className="text-lg font-bold">{risk}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[10px] text-stone-400">
+            Powered by DipteraCAST · OneAquaHealth Consortium · Mock data for demonstration
+          </p>
         </div>
       </motion.div>
     </div>
