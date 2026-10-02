@@ -22,6 +22,7 @@ import type { User } from "@/types"
 export function Header({ user }: { user: User }) {
   const { signOut } = useAuth()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-stone-200 bg-surface/80 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
@@ -54,15 +55,18 @@ export function Header({ user }: { user: User }) {
       <div className="flex items-center gap-3">
         {user.role === "researcher" && <NotificationBell />}
         <div className="flex items-center gap-2.5">
-          {user.avatar_url ? (
+          {user.avatar_url && !imageError ? (
             <img
               src={user.avatar_url}
-              alt={user.full_name}
+              alt={user.full_name || "User avatar"}
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
+              onError={() => setImageError(true)}
               className="h-8 w-8 rounded-full object-cover ring-2 ring-stone-100"
             />
           ) : (
-            <div className="h-8 w-8 rounded-full bg-stream-100 flex items-center justify-center text-stream-700 text-xs font-semibold">
-              {user.full_name?.charAt(0)?.toUpperCase() || "?"}
+            <div className="h-8 w-8 rounded-full bg-stream-100 flex items-center justify-center text-stream-700 text-xs font-semibold ring-2 ring-stone-100">
+              {user.full_name?.charAt(0)?.toUpperCase() || "U"}
             </div>
           )}
           <span className="hidden text-sm font-medium text-stone-700 sm:block">
