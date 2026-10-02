@@ -38,8 +38,10 @@ async def get_review_queue(
     max_score: int | None = None,
 ) -> tuple[list[Observation], int]:
     """Get observations pending expert review with optional filters."""
-    query = select(Observation).where(
-        Observation.status == ObservationStatus.PENDING_REVIEW
+    query = (
+        select(Observation)
+        .options(selectinload(Observation.user))
+        .where(Observation.status == ObservationStatus.PENDING_REVIEW)
     )
     count_query = select(func.count(Observation.id)).where(
         Observation.status == ObservationStatus.PENDING_REVIEW

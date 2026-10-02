@@ -85,6 +85,7 @@ async def get_observation_detail(
     result = await session.execute(
         select(Observation)
         .options(
+            selectinload(Observation.user),
             selectinload(Observation.ai_results),
             selectinload(Observation.review),
             selectinload(Observation.fhir_resource),
@@ -107,7 +108,7 @@ async def list_observations(
     If ``user`` is provided and their role is volunteer, only their own
     observations are returned.
     """
-    query = select(Observation)
+    query = select(Observation).options(selectinload(Observation.user))
     count_query = select(func.count(Observation.id))
 
     # Role-based filtering
