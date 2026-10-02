@@ -99,16 +99,7 @@ async def get_validated_map(
     (including those pending expert review).
     Coordinates are in ``[longitude, latitude]`` order per GeoJSON spec.
     """
-    query = select(Observation)
-    if user.role.value == "volunteer":
-        query = query.where(
-            or_(
-                Observation.status.in_(_VALIDATED),
-                Observation.user_id == user.id,
-            )
-        )
-    else:
-        query = query.where(Observation.status.in_(_VALIDATED))
+    query = select(Observation).where(Observation.status.in_(_VALIDATED))
 
     if species:
         query = query.where(Observation.top_species == species)
