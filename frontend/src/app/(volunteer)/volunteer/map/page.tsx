@@ -158,6 +158,10 @@ export default function VolunteerMapPage() {
                 <span className="h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white shadow-sm inline-block" />
                 Degraded / Vector risk (Midges, Mosquito larvae)
               </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-3.5 w-3.5 rounded-full bg-stone-400 border-2 border-dashed border-amber-600 shadow-sm inline-block" />
+                Pending Expert Review
+              </span>
             </div>
           </div>
         </div>
