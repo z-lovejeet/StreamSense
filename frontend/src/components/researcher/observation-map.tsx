@@ -123,10 +123,6 @@ export function ObservationMap({
       bounds.extend([lat, lng])
     })
 
-      marker.addTo(map)
-      bounds.extend([lat, lng])
-    })
-
     if (geojson.features.length > 0) {
       map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 })
     }
