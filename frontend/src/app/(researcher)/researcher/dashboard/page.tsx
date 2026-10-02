@@ -13,6 +13,7 @@ import {
   Zap,
   Timer,
   Bug,
+  Camera,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
@@ -140,8 +141,9 @@ export default function ResearcherDashboard() {
 
         {queueItems.length === 0 ? (
           <div className="rounded-cozy-lg border border-stone-100 bg-surface p-8 text-center shadow-cozy-sm">
-            <p className="text-sm text-stone-500">
-              🎉 All caught up! No observations need review.
+            <p className="flex items-center justify-center gap-1.5 text-sm text-stone-500">
+              <CheckCircle2 className="h-4 w-4 text-success-600" />
+              All caught up! No observations need review.
             </p>
           </div>
         ) : (
@@ -166,8 +168,8 @@ export default function ResearcherDashboard() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-stone-300 text-lg">
-                        📷
+                      <div className="flex h-full w-full items-center justify-center text-stone-300">
+                        <Camera className="h-5 w-5 text-stone-300" />
                       </div>
                     )}
                   </div>
