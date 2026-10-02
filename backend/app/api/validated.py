@@ -10,6 +10,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_session
 from app.middleware.auth import require_role
@@ -61,7 +62,7 @@ async def list_validated(
     Returns observations with status ``auto_validated`` or ``expert_validated``.
     Supports filtering by species, city, date range, and validation source.
     """
-    query = select(Observation)
+    query = select(Observation).options(selectinload(Observation.user))
     count_query = select(func.count(Observation.id))
 
     query = _apply_validated_filters(
@@ -99,7 +100,11 @@ async def get_validated_map(
     (including those pending expert review).
     Coordinates are in ``[longitude, latitude]`` order per GeoJSON spec.
     """
-    query = select(Observation).where(Observation.status.in_(_VALIDATED))
+    query = (
+        select(Observation)
+        .options(selectinload(Observation.user))
+        .where(Observation.status.in_(_VALIDATED))
+    )
 
     if species:
         query = query.where(Observation.top_species == species)
@@ -135,6 +140,7 @@ async def get_validated_map(
                     "thumbnail_url": obs.image_thumbnail_url or obs.image_url,
                     "location_name": obs.location_name,
                     "pilot_city": obs.pilot_city,
+                    "volunteer_name": obs.volunteer_name,
                 },
             }
         )
