@@ -14,11 +14,16 @@ import {
   Timer,
   Bug,
   Camera,
+  Database,
+  Compass,
+  FileCheck,
+  Sparkles,
 } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { PageSkeleton } from "@/components/shared/loading-skeleton"
+import { ResearcherGamification } from "@/components/researcher/researcher-gamification"
 import { formatDistanceToNow } from "date-fns"
 import type { SummaryStats, Observation, ObservationListResponse } from "@/types"
 
@@ -113,6 +118,15 @@ export default function ResearcherDashboard() {
           accent="danger"
         />
       </motion.div>
+
+      {/* Scientific Validation Milestones, Pilot Basins & Weekly QA Sprint */}
+      <ResearcherGamification
+        totalObservations={stats?.total_observations ?? 0}
+        validatedCount={totalValidated}
+        pendingCount={stats?.pending_review ?? 0}
+        autoRate={autoRate}
+        avgConfidence={stats?.avg_confidence ?? null}
+      />
 
       {/* Review Queue Preview */}
       <motion.div
@@ -280,6 +294,83 @@ export default function ResearcherDashboard() {
           <p className="mt-3 text-[10px] text-stone-400">
             Powered by DipteraCAST · OneAquaHealth Consortium · Mock data for demonstration
           </p>
+        </div>
+      </motion.div>
+
+      {/* Consortium Scientific Operations Hub */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55, duration: 0.4 }}
+        className="space-y-3"
+      >
+        <h2 className="font-display text-lg text-stone-800">
+          Scientific Operations Hub
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Link
+            href="/researcher/review"
+            className="flex items-center justify-between rounded-cozy-lg border border-stone-100 bg-surface p-4 shadow-cozy-sm hover:shadow-cozy hover:-translate-y-0.5 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-cozy bg-amber-50 text-amber-600 border border-amber-200">
+                <Clock className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-stone-800">Review Console</p>
+                <p className="text-[11px] text-stone-400">Triage pending observations</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-stone-300" />
+          </Link>
+
+          <Link
+            href="/researcher/validated"
+            className="flex items-center justify-between rounded-cozy-lg border border-stone-100 bg-surface p-4 shadow-cozy-sm hover:shadow-cozy hover:-translate-y-0.5 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-cozy bg-stream-50 text-stream-600 border border-stream-200">
+                <Database className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-stone-800">Validated Registry</p>
+                <p className="text-[11px] text-stone-400">GIS map & export table</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-stone-300" />
+          </Link>
+
+          <Link
+            href="/researcher/analytics"
+            className="flex items-center justify-between rounded-cozy-lg border border-stone-100 bg-surface p-4 shadow-cozy-sm hover:shadow-cozy hover:-translate-y-0.5 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-cozy bg-moss-50 text-moss-600 border border-moss-200">
+                <TrendingUp className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-stone-800">Catchment Analytics</p>
+                <p className="text-[11px] text-stone-400">BMWP trends & AI metrics</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-stone-300" />
+          </Link>
+
+          <Link
+            href="/researcher/fhir"
+            className="flex items-center justify-between rounded-cozy-lg border border-stone-100 bg-surface p-4 shadow-cozy-sm hover:shadow-cozy hover:-translate-y-0.5 transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-cozy bg-stream-50 text-stream-600 border border-stream-200">
+                <FileCheck className="h-4.5 w-4.5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-stone-800">HL7 / FHIR R4</p>
+                <p className="text-[11px] text-stone-400">Interoperability sandbox</p>
+              </div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-stone-300" />
+          </Link>
         </div>
       </motion.div>
     </div>
