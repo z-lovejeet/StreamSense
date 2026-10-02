@@ -26,7 +26,31 @@ const jetbrains = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "StreamSense — Healthy Waters, Healthy Communities",
   description:
-    "AI-powered citizen science platform for urban stream health monitoring. Part of the OneAquaHealth IEEE Global Hackathon 2026.",
+    "AI-powered citizen science platform for urban stream health monitoring. 7 AI agents identify species, score water quality, and generate FHIR health records — in seconds.",
+  keywords: [
+    "citizen science",
+    "stream health",
+    "FHIR",
+    "OneAquaHealth",
+    "macroinvertebrates",
+    "water quality",
+    "One Health",
+    "AI",
+  ],
+  openGraph: {
+    title: "StreamSense — Healthy Waters, Healthy Communities",
+    description:
+      "AI-powered citizen science for urban stream health. Snap a photo, get instant species ID + water quality score.",
+    type: "website",
+    locale: "en_US",
+    siteName: "StreamSense",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "StreamSense",
+    description:
+      "AI-powered citizen science for urban stream health monitoring.",
+  },
 }
 
 export default function RootLayout({
