@@ -93,21 +93,39 @@ async def get_validated_map(
     user: User = Depends(require_role("researcher", "volunteer")),
     session: AsyncSession = Depends(get_session),
 ):
-    """Get validated observations as GeoJSON FeatureCollection for map rendering.
+    """Get observations as GeoJSON FeatureCollection for map rendering.
 
-    Returns a GeoJSON-compliant response suitable for Leaflet/Mapbox layers.
+    Returns validated community observations, plus the user's own submissions
+    (including those pending expert review).
     Coordinates are in ``[longitude, latitude]`` order per GeoJSON spec.
     """
     query = select(Observation)
-    query = _apply_validated_filters(
-        query, species=species, city=city, date_from=date_from, date_to=date_to, source=None
-    )
+    if user.role.value == "volunteer":
+        query = query.where(
+            or_(
+                Observation.status.in_(_VALIDATED),
+                Observation.user_id == user.id,
+            )
+        )
+    else:
+        query = query.where(Observation.status.in_(_VALIDATED))
+
+    if species:
+        query = query.where(Observation.top_species == species)
+    if city:
+        query = query.where(Observation.pilot_city == city)
+    if date_from:
+        query = query.where(func.date(Observation.observed_at) >= date_from)
+    if date_to:
+        query = query.where(func.date(Observation.observed_at) <= date_to)
+
     query = query.order_by(Observation.observed_at.desc()).limit(1000)
 
     observations = list((await session.execute(query)).scalars().all())
 
     features = []
     for obs in observations:
+        status_val = obs.status.value if hasattr(obs.status, "value") else str(obs.status)
         features.append(
             {
                 "type": "Feature",
@@ -119,7 +137,9 @@ async def get_validated_map(
                     "id": str(obs.id),
                     "species": obs.top_species,
                     "confidence": obs.confidence_score,
-                    "validation_type": obs.status.value if hasattr(obs.status, 'value') else str(obs.status),
+                    "validation_type": status_val,
+                    "status": status_val,
+                    "is_pending": status_val == "pending_review",
                     "observed_at": obs.observed_at.isoformat() if obs.observed_at else None,
                     "thumbnail_url": obs.image_thumbnail_url or obs.image_url,
                     "location_name": obs.location_name,

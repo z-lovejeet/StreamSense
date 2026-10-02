@@ -38,7 +38,15 @@ function getPinColor(species: string | null): string {
   return "#dc4446" // red
 }
 
-function createCircleIcon(color: string) {
+function createCircleIcon(color: string, isPending: boolean = false) {
+  if (isPending) {
+    return L.divIcon({
+      html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px dashed #d97706;box-shadow:0 0 0 2px rgba(217,119,6,0.3)"></div>`,
+      className: "",
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+    })
+  }
   return L.divIcon({
     html: `<div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
     className: "",
@@ -97,19 +105,32 @@ export function ObservationMap({
 
     geojson.features.forEach((feature) => {
       const [lng, lat] = feature.geometry.coordinates
-      const props = feature.properties
+      const props = feature.properties as Record<string, any>
+      const isPending =
+        props.is_pending ||
+        props.status === "pending_review" ||
+        props.validation_type === "pending_review"
       const color = getPinColor(props.species)
 
       const marker = L.marker([lat, lng], {
-        icon: createCircleIcon(color),
+        icon: createCircleIcon(color, isPending),
       })
 
       marker.bindPopup(
         `<div style="font-family:system-ui;font-size:13px;line-height:1.4">
+          <div style="margin-bottom:6px">
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:9999px;${
+              isPending
+                ? "background:#fef3c7;color:#92400e;border:1px solid #fde68a"
+                : "background:#dcfce7;color:#166534;border:1px solid #bbf7d0"
+            }">
+              ${isPending ? "Pending Review" : "Validated"}
+            </span>
+          </div>
           <strong>${props.species || "Unknown"}</strong><br/>
-          ${props.confidence !== null ? `Confidence: ${props.confidence}%<br/>` : ""}
-          ${props.location_name || props.pilot_city || ""}<br/>
-          <span style="color:#888">${props.observed_at ? new Date(props.observed_at).toLocaleDateString() : ""}</span>
+          ${props.confidence !== null ? `<span style="color:#57534e">Confidence: ${props.confidence}%</span><br/>` : ""}
+          <span style="color:#44403c">${props.location_name || props.pilot_city || ""}</span><br/>
+          <span style="color:#888;font-size:11px">${props.observed_at ? new Date(props.observed_at).toLocaleDateString() : ""}</span>
         </div>`,
         { maxWidth: 220 },
       )
