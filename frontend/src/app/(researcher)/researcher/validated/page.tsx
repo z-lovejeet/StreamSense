@@ -117,8 +117,8 @@ export default function ValidatedDataPage() {
           <h1 className="font-display text-2xl text-stone-800">
             Validated Data
           </h1>
-          <p className="mt-1 text-sm text-stone-500">
-            {total} validated observation{total !== 1 ? "s" : ""}
+          <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+            Curated archive of research-grade stream observations verified by AI (score &ge; 70) or certified by expert ecologists. Switch between tabular view with multi-column sorting and geographic Leaflet map view to analyze macroinvertebrate distributions across pilot cities.
           </p>
         </div>
 

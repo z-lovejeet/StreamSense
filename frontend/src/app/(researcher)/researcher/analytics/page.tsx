@@ -69,8 +69,8 @@ export default function AnalyticsPage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="font-display text-2xl text-stone-800">Analytics</h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Platform-wide statistics and trends
+        <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+          Aggregated scientific intelligence across all 5 pilot basins. Explore longitudinal observation timelines, macroinvertebrate biodiversity rankings, AI pipeline confidence calibration histograms, and automated triage vs. expert review proportions.
         </p>
       </motion.div>
 
