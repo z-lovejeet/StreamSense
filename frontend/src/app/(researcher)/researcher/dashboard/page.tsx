@@ -77,8 +77,8 @@ export default function ResearcherDashboard() {
         <h1 className="font-display text-2xl md:text-3xl text-stone-800">
           Dashboard
         </h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Welcome back, {firstName}. Here&apos;s your overview.
+        <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+          Welcome back, {firstName}. Real-time monitoring dashboard for the OneAquaHealth consortium. Track automated pipeline triage, review priority verification queues, inspect DipteraCAST disease-vector alerts, and verify incoming stream macroinvertebrates.
         </p>
       </motion.div>
 

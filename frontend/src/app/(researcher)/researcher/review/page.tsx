@@ -55,8 +55,8 @@ export default function ReviewQueuePage() {
         transition={{ duration: 0.4 }}
       >
         <h1 className="font-display text-2xl text-stone-800">Review Queue</h1>
-        <p className="mt-1 text-sm text-stone-500">
-          Observations pending expert validation
+        <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+          Triage queue for observations flagged by AI quality scoring (confidence &lt; 70 or environmental anomalies). Inspect the side-by-side macro photo, verify species taxonomy against BioCLIP predictions, confirm accurate IDs, or correct observations to maintain scientific dataset integrity.
         </p>
       </motion.div>
 
