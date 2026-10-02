@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Search } from "lucide-react"
+import { Search, CheckCircle2 } from "lucide-react"
 import { api } from "@/lib/api"
 import { ReviewQueue } from "@/components/researcher/review-queue"
 import { CardSkeleton } from "@/components/shared/loading-skeleton"
@@ -113,9 +113,13 @@ export default function ReviewQueuePage() {
           ))}
         </div>
       ) : observations.length === 0 ? (
-        <div className="rounded-cozy-lg border border-stone-100 bg-surface p-12 text-center shadow-cozy-sm">
-          <p className="text-sm text-stone-500">
-            🎉 All caught up! No observations need review.
+        <div className="rounded-cozy-lg border border-stone-100 bg-surface p-12 text-center shadow-cozy-sm flex flex-col items-center justify-center gap-2">
+          <CheckCircle2 className="h-8 w-8 text-teal-600 mb-1" />
+          <p className="text-sm font-medium text-stone-700">
+            All caught up! No observations need review.
+          </p>
+          <p className="text-xs text-stone-400">
+            Pending citizen submissions will appear here for expert validation.
           </p>
         </div>
       ) : (

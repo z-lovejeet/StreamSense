@@ -86,7 +86,7 @@ export default function FHIRPage() {
         .map((r) => r.observation_id)
 
       await api.post("/fhir/export", { observation_ids: observationIds })
-      toast.success("FHIR bundle posted to OAH Sandbox — 201 Created ✅")
+      toast.success("FHIR bundle posted to OAH Sandbox — 201 Created")
       setSelectedIds(new Set())
       loadResources()
     } catch {
