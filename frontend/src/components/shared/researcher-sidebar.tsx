@@ -88,6 +88,20 @@ export function ResearcherSidebar() {
         })}
       </nav>
 
+      {/* Switch to Volunteer Portal */}
+      <div className="px-3 pb-3">
+        <Link
+          href="/volunteer/dashboard"
+          className="flex items-center justify-between rounded-cozy bg-stone-800 border border-stone-700/60 px-3 py-2.5 text-xs font-semibold text-stone-200 shadow-cozy-sm transition-all hover:bg-stone-700/80"
+        >
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-stream-400 animate-pulse" />
+            Volunteer Portal
+          </span>
+          <span className="text-[10px] text-stone-400">&rarr;</span>
+        </Link>
+      </div>
+
       {/* Footer */}
       <div className="px-4 py-4 border-t border-stone-700/50">
         <p className="text-[11px] text-stone-600 text-center">

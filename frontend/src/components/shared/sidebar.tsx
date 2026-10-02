@@ -60,6 +60,20 @@ export function Sidebar() {
         })}
       </nav>
 
+      {/* Switch to Researcher Portal */}
+      <div className="px-3 pb-3">
+        <Link
+          href="/researcher/dashboard"
+          className="flex items-center justify-between rounded-cozy bg-stone-900 px-3 py-2.5 text-xs font-semibold text-stone-100 shadow-cozy-sm transition-all hover:bg-stone-800 hover:shadow-cozy"
+        >
+          <span className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            Researcher Portal
+          </span>
+          <span className="text-[10px] text-stone-400">&rarr;</span>
+        </Link>
+      </div>
+
       {/* Footer */}
       <div className="px-4 py-4 border-t border-stone-200">
         <p className="text-[11px] text-stone-400 text-center">
