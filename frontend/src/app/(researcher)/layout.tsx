@@ -6,6 +6,7 @@ import { useEffect } from "react"
 import { Loader2 } from "lucide-react"
 import { Header } from "@/components/shared/header"
 import { ResearcherSidebar } from "@/components/shared/researcher-sidebar"
+import { ErrorBoundary } from "@/components/shared/error-boundary"
 
 /**
  * Researcher layout — desktop-optimized app shell.
@@ -55,7 +56,9 @@ export default function ResearcherLayout({
       <div className="flex flex-1 flex-col lg:pl-[260px]">
         <Header user={user} />
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">{children}</div>
+          <div className="mx-auto max-w-7xl">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </div>
         </main>
       </div>
     </div>
