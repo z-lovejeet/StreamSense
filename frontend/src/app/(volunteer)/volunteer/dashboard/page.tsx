@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { api } from "@/lib/api"
 import { ObservationCard } from "@/components/shared/observation-card"
 import { PageSkeleton } from "@/components/shared/loading-skeleton"
+import { VolunteerGamification } from "@/components/volunteer/volunteer-gamification"
 import type { Observation, ObservationListResponse } from "@/types"
 
 /**
@@ -133,6 +134,12 @@ export default function VolunteerDashboard() {
         </div>
       </motion.div>
 
+      {/* Gamification, Badges & Field Challenges */}
+      <VolunteerGamification
+        totalObservations={total}
+        validatedObservations={validated}
+      />
+
       {/* Recent Observations */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
@@ -140,9 +147,24 @@ export default function VolunteerDashboard() {
         transition={{ delay: 0.3, duration: 0.4 }}
       >
         <div className="space-y-4">
-          <h2 className="font-display text-lg text-stone-800">
-            Recent Observations
-          </h2>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-lg text-stone-800">
+                Recent Observations
+              </h2>
+              <p className="text-xs text-stone-500 mt-0.5">
+                Your latest stream macroinvertebrate submissions and AI triage statuses
+              </p>
+            </div>
+            {observations.length > 0 && (
+              <Link
+                href="/volunteer/history"
+                className="text-xs font-semibold text-stream-600 hover:text-stream-700 transition-colors"
+              >
+                View all ({total})
+              </Link>
+            )}
+          </div>
 
           {observations.length === 0 ? (
             <div className="rounded-cozy-lg border border-stone-100 bg-surface p-8 text-center shadow-cozy-sm">
