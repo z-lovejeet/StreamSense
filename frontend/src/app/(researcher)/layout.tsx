@@ -20,7 +20,7 @@ export default function ResearcherLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, loading } = useAuth()
+  const { user, loading, switchRole } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
@@ -28,9 +28,9 @@ export default function ResearcherLayout({
       router.push("/login")
     }
     if (!loading && user && user.role !== "researcher") {
-      router.push("/volunteer/dashboard")
+      switchRole("researcher")
     }
-  }, [user, loading, router])
+  }, [user, loading, router, switchRole])
 
   if (loading) {
     return (
@@ -43,7 +43,7 @@ export default function ResearcherLayout({
     )
   }
 
-  if (!user || user.role !== "researcher") return null
+  if (!user) return null
 
   return (
     <div className="flex min-h-screen bg-background">

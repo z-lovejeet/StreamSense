@@ -27,9 +27,6 @@ export default function VolunteerLayout({
     if (!loading && !user) {
       router.push("/login")
     }
-    if (!loading && user && user.role === "researcher") {
-      router.push("/researcher/dashboard")
-    }
   }, [user, loading, router])
 
   if (loading) {
