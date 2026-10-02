@@ -206,11 +206,16 @@ export default function ResearcherDashboard() {
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-stone-400 truncate">
-                      {obs.pilot_city || obs.location_name || "Unknown"} ·{" "}
-                      {formatDistanceToNow(new Date(obs.created_at), {
-                        addSuffix: true,
-                      })}
+                    <p className="text-xs text-stone-500 truncate flex items-center gap-1.5 mt-0.5">
+                      <span className="font-medium text-stone-700">By {obs.volunteer_name || "Volunteer"}</span>
+                      <span className="text-stone-300">·</span>
+                      <span>{obs.pilot_city || obs.location_name || "Unknown"}</span>
+                      <span className="text-stone-300">·</span>
+                      <span className="text-stone-400">
+                        {formatDistanceToNow(new Date(obs.created_at), {
+                          addSuffix: true,
+                        })}
+                      </span>
                     </p>
                   </div>
 

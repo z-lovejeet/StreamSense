@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Camera } from "lucide-react"
+import { Camera, User as UserIcon } from "lucide-react"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { formatDistanceToNow } from "date-fns"
 import type { Observation } from "@/types"
@@ -82,12 +82,20 @@ export function ReviewQueue({
                   </div>
                 )}
 
-                <p className="mt-1 text-xs text-stone-400 truncate">
-                  {obs.pilot_city || obs.location_name || "Unknown location"} ·{" "}
-                  {formatDistanceToNow(new Date(obs.created_at), {
-                    addSuffix: true,
-                  })}
-                </p>
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-stone-500 truncate flex-wrap">
+                  <span className="inline-flex items-center gap-1 font-medium text-stone-700">
+                    <UserIcon className="h-3 w-3 text-stream-600" />
+                    {obs.volunteer_name || "Volunteer"}
+                  </span>
+                  <span className="text-stone-300">·</span>
+                  <span className="text-stone-500">{obs.pilot_city || obs.location_name || "Unknown location"}</span>
+                  <span className="text-stone-300">·</span>
+                  <span className="text-stone-400">
+                    {formatDistanceToNow(new Date(obs.created_at), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
               </div>
 
               <StatusBadge status={obs.status} />
