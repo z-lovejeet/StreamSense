@@ -14,10 +14,12 @@ REF: DOC-04 Lines 419-481
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Annotated
 from uuid import UUID
 
+import httpx
 from fastapi import Depends, Header
 from jose import JWTError, jwt
 from sqlalchemy import select
@@ -31,6 +33,32 @@ from app.models.user import User
 
 logger = logging.getLogger(__name__)
 
+# ── JWKS cache (for ES256 tokens) ────────────────────────────────
+_jwks_cache: dict | None = None
+
+
+async def _get_jwks() -> dict:
+    """Fetch and cache JWKS from the Supabase JWKS endpoint."""
+    global _jwks_cache
+    if _jwks_cache is not None:
+        return _jwks_cache
+
+    jwks_url = f"{settings.supabase_url}/auth/v1/.well-known/jwks.json"
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(jwks_url)
+        resp.raise_for_status()
+        _jwks_cache = resp.json()
+        logger.info("Fetched JWKS from %s", jwks_url)
+        return _jwks_cache
+
+
+def _decode_token_header(token: str) -> dict:
+    """Decode JWT header without verification to check the algorithm."""
+    try:
+        return jwt.get_unverified_header(token)
+    except Exception:
+        return {}
+
 
 async def get_current_user(
     authorization: Annotated[str, Header()],
@@ -38,9 +66,11 @@ async def get_current_user(
 ) -> User:
     """FastAPI dependency: verify JWT and return the authenticated User.
 
+    Supports both HS256 (legacy) and ES256 (new Supabase) JWT algorithms.
+
     Steps:
       1. Extract token from ``Authorization: Bearer <token>``.
-      2. Decode & verify via Supabase JWT secret (HS256).
+      2. Decode & verify — auto-detect HS256 vs ES256.
       3. Extract ``sub`` claim (Supabase auth user UUID).
       4. Look up user in the database.
       5. If not found → 401 (user must call ``POST /auth/sync`` first).
@@ -57,16 +87,33 @@ async def get_current_user(
     if not token:
         raise UnauthorizedError("Missing authentication token")
 
-    # 2. Decode JWT
+    # 2. Decode JWT — support both HS256 and ES256
+    header = _decode_token_header(token)
+    alg = header.get("alg", "HS256")
+
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
+        if alg == "ES256":
+            # Asymmetric — use JWKS public key
+            jwks = await _get_jwks()
+            payload = jwt.decode(
+                token,
+                jwks,
+                algorithms=["ES256"],
+                audience="authenticated",
+            )
+        else:
+            # Symmetric — use JWT secret (HS256)
+            payload = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
     except JWTError as exc:
-        logger.debug("JWT verification failed: %s", exc)
+        logger.warning(
+            "JWT verification failed (alg=%s): %s | token_prefix=%s...",
+            alg, exc, token[:20],
+        )
         raise UnauthorizedError("Invalid or expired token")
 
     # 3. Extract user ID

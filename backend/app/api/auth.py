@@ -48,12 +48,25 @@ async def sync_user(
 
     token = authorization[7:]
     try:
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
+        header = jwt.get_unverified_header(token)
+        alg = header.get("alg", "HS256")
+
+        if alg == "ES256":
+            from app.middleware.auth import _get_jwks
+            jwks = await _get_jwks()
+            payload = jwt.decode(
+                token,
+                jwks,
+                algorithms=["ES256"],
+                audience="authenticated",
+            )
+        else:
+            payload = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
     except JWTError:
         raise UnauthorizedError("Invalid or expired token")
 
