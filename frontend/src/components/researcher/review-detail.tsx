@@ -11,6 +11,8 @@ import {
   AlertTriangle,
   Loader2,
   X,
+  User as UserIcon,
+  Mail,
 } from "lucide-react"
 import { api } from "@/lib/api"
 import { ConfidenceGauge } from "@/components/shared/confidence-gauge"
@@ -107,6 +109,51 @@ export function ReviewDetail({ detail }: { detail: ObservationDetail }) {
               alt={obs.top_species || "Stream observation"}
               className="w-full max-h-80 object-cover"
             />
+          </motion.div>
+
+          {/* Volunteer / Submitter Profile */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-cozy-lg border border-stone-100 bg-surface p-4 shadow-cozy-sm"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-stream-100 text-stream-700 font-semibold text-sm">
+                  {obs.volunteer_avatar_url ? (
+                    <img
+                      src={obs.volunteer_avatar_url}
+                      alt={obs.volunteer_name || "Volunteer"}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserIcon className="h-5 w-5 text-stream-600" />
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-stone-800">
+                      {obs.volunteer_name || "Citizen Scientist"}
+                    </span>
+                    <span className="rounded-pill bg-stream-50 px-2 py-0.5 text-[10px] font-semibold text-stream-700 border border-stream-200">
+                      Volunteer Submitter
+                    </span>
+                  </div>
+                  {obs.volunteer_email && (
+                    <p className="flex items-center gap-1 text-xs text-stone-400 font-mono mt-0.5">
+                      <Mail className="h-3 w-3 text-stone-400" />
+                      {obs.volunteer_email}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right text-xs text-stone-400">
+                <p>Observer Role</p>
+                <p className="font-medium text-stone-600">Citizen Science</p>
+              </div>
+            </div>
           </motion.div>
 
           {/* Volunteer Description */}

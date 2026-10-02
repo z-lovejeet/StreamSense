@@ -34,6 +34,9 @@ export type ObservationStatus =
 export interface Observation {
   id: string
   user_id: string
+  volunteer_name?: string | null
+  volunteer_email?: string | null
+  volunteer_avatar_url?: string | null
   image_url: string
   image_thumbnail_url: string | null
   description: string | null
