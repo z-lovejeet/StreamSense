@@ -66,15 +66,30 @@ export function useAuth() {
   }, [syncUser, fetchUser])
 
   const signIn = useCallback(
-    async (provider: "google" | "github") => {
+    async (provider: "google" | "github", nextPath?: string) => {
       const supabase = createBrowserClient()
+      const target = nextPath || "/volunteer/dashboard"
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/callback`,
+          redirectTo: `${window.location.origin}/callback?next=${encodeURIComponent(target)}`,
         },
       })
       if (error) throw error
+    },
+    [],
+  )
+
+  const switchRole = useCallback(
+    async (newRole: "volunteer" | "researcher") => {
+      try {
+        const data = await api.post<User>("/auth/role", { role: newRole })
+        setUser(data)
+        return data
+      } catch (err) {
+        console.error("Failed to switch role:", err)
+        return null
+      }
     },
     [],
   )
@@ -91,6 +106,7 @@ export function useAuth() {
     signIn,
     signOut,
     syncUser,
+    switchRole,
     isAuthenticated: !!user,
     isVolunteer: user?.role === "volunteer",
     isResearcher: user?.role === "researcher",

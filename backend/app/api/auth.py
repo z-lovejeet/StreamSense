@@ -14,13 +14,14 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header
 from jose import JWTError, jwt
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_session
 from app.middleware.auth import get_current_user
-from app.middleware.errors import UnauthorizedError
+from app.middleware.errors import UnauthorizedError, ValidationError
 from app.models.enums import UserRole
 from app.models.user import User
 from app.schemas.user import UserResponse, UserSyncResponse
@@ -127,3 +128,29 @@ async def get_me(
 ):
     """Get current authenticated user profile."""
     return UserResponse.model_validate(current_user)
+
+
+class UpdateRoleRequest(BaseModel):
+    role: str
+
+
+@router.post("/role", response_model=UserResponse)
+@router.put("/role", response_model=UserResponse)
+async def switch_role(
+    body: UpdateRoleRequest,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Switch current user role between volunteer and researcher."""
+    if body.role not in ("volunteer", "researcher"):
+        raise ValidationError(
+            f"Invalid role: {body.role}. Must be 'volunteer' or 'researcher'"
+        )
+
+    current_user.role = UserRole(body.role)
+    current_user.updated_at = datetime.now(timezone.utc)
+    session.add(current_user)
+    await session.commit()
+    await session.refresh(current_user)
+    return UserResponse.model_validate(current_user)
+
