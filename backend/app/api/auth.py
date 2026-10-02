@@ -113,8 +113,23 @@ async def sync_user(
         user.email = email
         user.updated_at = datetime.now(timezone.utc)
 
-    await session.commit()
-    await session.refresh(user)
+    try:
+        await session.commit()
+        await session.refresh(user)
+    except Exception as exc:
+        await session.rollback()
+        logger.warning("Sync user commit conflict: %s. Fetching existing user.", exc)
+        result = await session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user.full_name = full_name
+            user.avatar_url = avatar_url
+            user.email = email
+            user.updated_at = datetime.now(timezone.utc)
+            await session.commit()
+            await session.refresh(user)
+        else:
+            raise
 
     return UserSyncResponse(
         user=UserResponse.model_validate(user),
