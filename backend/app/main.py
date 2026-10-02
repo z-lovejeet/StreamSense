@@ -24,21 +24,21 @@ async def lifespan(app: FastAPI):
     On startup: verify database connectivity via a SELECT 1 probe.
     On shutdown: dispose the engine connection pool.
     """
-    print("🌊 StreamSense API starting up...")
+    print("[StreamSense] API starting up...")
     # Verify database connectivity
     try:
         async with engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
-        print("✅ Database connected")
+        print("[StreamSense] Database connected successfully.")
     except Exception as e:
-        print(f"⚠️  Database connection failed: {e}")
+        print(f"[StreamSense] Database connection warning: {e}")
         print("   The API will start but database-dependent endpoints will fail.")
 
     yield
 
     # Cleanup
     await engine.dispose()
-    print("🌊 StreamSense API shut down.")
+    print("[StreamSense] API shut down.")
 
 
 app = FastAPI(

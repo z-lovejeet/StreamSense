@@ -68,7 +68,7 @@ async def predict_disease_vector(
     # Generate prediction text
     text_map = {
         "critical": (
-            f"⚠️ High disease vector risk detected at this location. "
+            f"High disease vector risk detected at this location. "
             f"{species or 'Vector species'} larvae presence indicates active "
             f"breeding habitat. Public health monitoring recommended."
         ),
