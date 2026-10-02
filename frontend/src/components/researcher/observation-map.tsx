@@ -11,6 +11,7 @@ interface MapFeatureProperties {
   location_name?: string | null
   pilot_city?: string | null
   observed_at?: string | null
+  volunteer_name?: string | null
   [key: string]: unknown
 }
 
@@ -121,6 +122,7 @@ export function ObservationMap({
             </span>
           </div>
           <strong>${props.species || "Unknown"}</strong><br/>
+          ${props.volunteer_name ? `<span style="color:#0f766e;font-size:11px;font-weight:600">Submitted by: ${props.volunteer_name}</span><br/>` : ""}
           ${props.confidence !== null ? `<span style="color:#57534e">Confidence: ${props.confidence}%</span><br/>` : ""}
           <span style="color:#44403c">${props.location_name || props.pilot_city || ""}</span><br/>
           <span style="color:#888;font-size:11px">${props.observed_at ? new Date(props.observed_at).toLocaleDateString() : ""}</span>

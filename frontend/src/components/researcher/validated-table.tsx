@@ -6,6 +6,7 @@ import type { Observation } from "@/types"
 
 const columns = [
   { key: "observed_at", label: "Date" },
+  { key: "volunteer_name", label: "Volunteer" },
   { key: "location_name", label: "Location" },
   { key: "top_species", label: "Species" },
   { key: "confidence_score", label: "Confidence" },
@@ -70,6 +71,11 @@ export function ValidatedTable({
                         year: "numeric",
                       })
                     : "—"}
+                </td>
+                <td className="px-4 py-3 text-stone-700 whitespace-nowrap">
+                  <span className="font-medium text-stone-800">
+                    {obs.volunteer_name || "Citizen Scientist"}
+                  </span>
                 </td>
                 <td className="px-4 py-3 text-stone-700 max-w-[160px] truncate">
                   {obs.pilot_city || obs.location_name || "—"}
