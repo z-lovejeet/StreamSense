@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { Camera } from "lucide-react"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { formatDistanceToNow } from "date-fns"
 import type { Observation } from "@/types"
@@ -36,8 +37,8 @@ export function ReviewQueue({
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-stone-300 text-xl">
-                    📷
+                  <div className="flex h-full w-full items-center justify-center text-stone-400">
+                    <Camera className="h-6 w-6" />
                   </div>
                 )}
               </div>

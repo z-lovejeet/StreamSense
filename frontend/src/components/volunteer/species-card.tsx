@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Bug } from "lucide-react"
 import { ConfidenceGauge } from "@/components/shared/confidence-gauge"
 
 // BMWP scores and common names from DOC-05
@@ -112,14 +112,6 @@ export function SpeciesCard({
   }
 
   const qualityColor = qualityColors[info.quality] || "text-stone-600 bg-stone-50"
-  const qualityEmoji =
-    info.quality === "Good"
-      ? "🟢"
-      : info.quality === "Moderate"
-        ? "🟡"
-        : info.quality === "Disease Vector"
-          ? "⚠️"
-          : "🔴"
 
   return (
     <motion.div
@@ -131,8 +123,8 @@ export function SpeciesCard({
       <div className="p-5">
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
-          <div className="h-10 w-10 rounded-cozy bg-stream-50 flex items-center justify-center flex-shrink-0">
-            <span className="text-lg">🦋</span>
+          <div className="h-10 w-10 rounded-cozy bg-stream-50 flex items-center justify-center flex-shrink-0 text-stream-600">
+            <Bug className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-mono text-xs uppercase tracking-wider text-stone-400">
@@ -150,13 +142,24 @@ export function SpeciesCard({
         </div>
 
         {/* Ecological Metrics */}
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-3 text-xs flex-wrap">
           <span className="font-mono text-stone-500">
             BMWP Score: <span className="font-semibold text-stone-700">{info.bmwp}</span>
           </span>
           <span className="text-stone-300">·</span>
-          <span className={`rounded-pill px-2 py-0.5 font-semibold ${qualityColor}`}>
-            Water Quality: {info.quality} {qualityEmoji}
+          <span className={`inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 font-semibold ${qualityColor}`}>
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                info.quality === "Good"
+                  ? "bg-emerald-500"
+                  : info.quality === "Moderate"
+                    ? "bg-amber-500"
+                    : info.quality === "Disease Vector"
+                      ? "bg-rose-500"
+                      : "bg-red-500"
+              }`}
+            />
+            Water Quality: {info.quality}
           </span>
         </div>
 
