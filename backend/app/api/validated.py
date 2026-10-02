@@ -53,7 +53,7 @@ async def list_validated(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
     source: str | None = Query(None, description="auto_validated or expert_validated"),
-    user: User = Depends(require_role("researcher")),
+    user: User = Depends(require_role("researcher", "volunteer")),
     session: AsyncSession = Depends(get_session),
 ):
     """List validated observations with filtering.
@@ -90,7 +90,7 @@ async def get_validated_map(
     city: str | None = Query(None),
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
-    user: User = Depends(require_role("researcher")),
+    user: User = Depends(require_role("researcher", "volunteer")),
     session: AsyncSession = Depends(get_session),
 ):
     """Get validated observations as GeoJSON FeatureCollection for map rendering.
