@@ -80,8 +80,8 @@ export default function VolunteerMapPage() {
           <h1 className="font-display text-2xl md:text-3xl text-stone-800">
             Stream Observation Map
           </h1>
-          <p className="mt-1 text-sm text-stone-500">
-            Explore validated bioindicator observations across European urban streams
+          <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+            Geographic view of validated community observations across the 5 OneAquaHealth pilot cities (Coimbra, Toulouse, Benevento, Ghent, and Oslo). Pins are colored by biological water quality (BMWP index). Click any marker to view photo, confidence score, and stream coordinates.
           </p>
         </div>
 

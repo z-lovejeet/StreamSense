@@ -48,8 +48,8 @@ export default function HistoryPage() {
         <h1 className="font-display text-2xl text-stone-800">
           Observation History
         </h1>
-        <p className="mt-1 text-sm text-stone-500">
-          All your stream observations and their validation status
+        <p className="mt-1 text-sm text-stone-500 max-w-2xl leading-relaxed">
+          Your complete catalog of submitted stream observations. Check AI identification confidence scores, verification status (Auto-Validated or Expert-Reviewed), and click any observation to inspect species details and disease-vector risk insights.
         </p>
       </div>
 
