@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { Camera } from "lucide-react"
 import { StatusBadge } from "@/components/shared/status-badge"
 import { formatDistanceToNow } from "date-fns"
 import type { Observation } from "@/types"
@@ -41,7 +42,7 @@ export function ObservationCard({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-stone-300">
-                <span className="text-xl">📷</span>
+                <Camera className="h-6 w-6 text-stone-300" />
               </div>
             )}
           </div>

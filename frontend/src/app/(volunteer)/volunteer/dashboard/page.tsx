@@ -67,7 +67,7 @@ export default function VolunteerDashboard() {
         transition={{ duration: 0.4 }}
       >
         <h1 className="font-display text-2xl md:text-3xl text-stone-800">
-          Welcome back, {firstName} 👋
+          Welcome back, {firstName}
         </h1>
         <p className="mt-1 text-sm text-stone-500">
           Your stream observations help protect community waterways.
