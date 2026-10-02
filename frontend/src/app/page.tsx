@@ -269,8 +269,7 @@ export default function HomePage() {
             </span>
           </div>
           <p className="text-xs text-stone-400 text-center">
-            OneAquaHealth IEEE Global Hackathon 2026 · Built with 🌊 for
-            healthy communities
+            OneAquaHealth IEEE Global Hackathon 2026 · Built for healthy urban stream communities
           </p>
         </div>
       </footer>
