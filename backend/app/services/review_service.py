@@ -197,7 +197,7 @@ async def process_review_action(
         notification = Notification(
             user_id=observation.user_id,
             type="review_complete",
-            title="Your observation was validated! ✅",
+            title="Your observation was validated!",
             message=(
                 f"A researcher confirmed your {observation.top_species or 'species'} "
                 f"observation. Your data is now part of the scientific record."

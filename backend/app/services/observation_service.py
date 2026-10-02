@@ -262,9 +262,9 @@ async def _run_pipeline_task(
                 obs = await notify_session.get(Observation, observation_id)
                 if obs:
                     title = (
-                        "Observation auto-validated! ✅"
+                        "Observation auto-validated!"
                         if obs.status == ObservationStatus.AUTO_VALIDATED
-                        else "Observation submitted for expert review 🔍"
+                        else "Observation submitted for expert review"
                     )
                     message = (
                         f"Your stream observation scored {obs.confidence_score}/100. "
