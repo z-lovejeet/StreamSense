@@ -60,7 +60,7 @@ DEMO_DATA = [
     },
     {
         # Freshwater river stream with pebble gravel bed and clean sunlit water
-        "image_url": "/images/observations/benevento_stream.jpg",
+        "image_url": "/images/observations/benevento_calore_stream.jpg",
         "description": "Shallow gravel stream riffle near the riverbank. Found small mayfly nymphs swimming among smooth river pebbles. Cool, well-oxygenated water.",
         "latitude": 41.1306,
         "longitude": 14.7681,
