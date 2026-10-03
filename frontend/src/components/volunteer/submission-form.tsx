@@ -105,7 +105,8 @@ export function SubmissionForm() {
   const [description, setDescription] = useState("")
   const [latitude, setLatitude] = useState<number | null>(null)
   const [longitude, setLongitude] = useState<number | null>(null)
-  const [locationStatus, setLocationStatus] = useState("Getting your location...")
+  const [locationName, setLocationName] = useState<string>("")
+  const [locationStatus, setLocationStatus] = useState("No location selected")
   const [detectingLocation, setDetectingLocation] = useState(false)
   const [cityInput, setCityInput] = useState("")
   const [searchingCity, setSearchingCity] = useState(false)
@@ -117,7 +118,7 @@ export function SubmissionForm() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Auto-detect device GPS
+  // Auto-detect device GPS — ONLY runs when user clicks the button
   const detectDeviceLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationStatus("Location not supported by device")
@@ -130,6 +131,7 @@ export function SubmissionForm() {
       (pos) => {
         setLatitude(pos.coords.latitude)
         setLongitude(pos.coords.longitude)
+        setLocationName("")
         setLocationStatus(
           `${pos.coords.latitude.toFixed(4)}°, ${pos.coords.longitude.toFixed(4)}° (Device GPS)`,
         )
@@ -137,7 +139,7 @@ export function SubmissionForm() {
       },
       (err) => {
         console.error("GPS error:", err)
-        setLocationStatus("Unable to get device location")
+        setLocationStatus("Unable to acquire device location")
         setDetectingLocation(false)
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -146,14 +148,16 @@ export function SubmissionForm() {
 
   // Quick select an EU Pilot Site
   const selectPilotCity = useCallback((city: PilotCity) => {
-    setCityInput(`${city.name}, ${city.country}`)
+    const name = `${city.name}, ${city.country}`
+    setCityInput(name)
+    setLocationName(name)
     setCityError(null)
     setLatitude(city.lat)
     setLongitude(city.lon)
-    setLocationStatus(`${city.name}, ${city.country} (${city.lat}, ${city.lon})`)
+    setLocationStatus(`${name} (${city.lat}, ${city.lon})`)
   }, [])
 
-  // Resolve city name to coordinates
+  // Resolve city, river, lake, or full address to coordinates
   const handleCitySearch = useCallback(
     async (customName?: string) => {
       const query = (customName ?? cityInput).trim()
@@ -167,6 +171,7 @@ export function SubmissionForm() {
         const item = COMMON_CITIES[normalized]
         setLatitude(item.lat)
         setLongitude(item.lon)
+        setLocationName(item.name)
         setLocationStatus(`${item.name} (${item.lat.toFixed(4)}°, ${item.lon.toFixed(4)}°)`)
         setCityInput(item.name)
         setSearchingCity(false)
@@ -177,16 +182,17 @@ export function SubmissionForm() {
         const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}))
-          throw new Error(errData.error || "City not found. Please try another name.")
+          throw new Error(errData.error || "Location not found. Please try another place name.")
         }
         const data = await res.json()
         setLatitude(data.latitude)
         setLongitude(data.longitude)
-        const displayName = data.display_name.split(",").slice(0, 2).join(",")
-        setLocationStatus(`${displayName} (${data.latitude.toFixed(4)}°, ${data.longitude.toFixed(4)}°)`)
-        setCityInput(displayName)
+        const resolvedName = data.name || data.display_name.split(",").slice(0, 2).join(",")
+        setLocationName(resolvedName)
+        setLocationStatus(`${resolvedName} (${data.latitude.toFixed(4)}°, ${data.longitude.toFixed(4)}°)`)
+        setCityInput(resolvedName)
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Failed to locate city"
+        const msg = err instanceof Error ? err.message : "Failed to locate place"
         setCityError(msg)
       } finally {
         setSearchingCity(false)
@@ -194,11 +200,6 @@ export function SubmissionForm() {
     },
     [cityInput],
   )
-
-  // Initial attempt to get GPS on mount
-  useEffect(() => {
-    detectDeviceLocation()
-  }, [detectDeviceLocation])
 
   // Compress image via Canvas if needed
   const compressImage = useCallback(
@@ -311,6 +312,7 @@ export function SubmissionForm() {
         description: description || undefined,
         latitude,
         longitude,
+        location_name: locationName || undefined,
         timestamp: timestamp.toISOString(),
       })
 
@@ -460,10 +462,10 @@ export function SubmissionForm() {
           </button>
         </div>
 
-        {/* Enter City Name Manually */}
+        {/* Enter City, River, Lake, or Address Manually */}
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-stone-700 block">
-            Enter City Name (Manual):
+            Enter City, River, Lake, or Address (Manual):
           </label>
           <div className="flex gap-2">
             <input
@@ -479,7 +481,7 @@ export function SubmissionForm() {
                   handleCitySearch()
                 }
               }}
-              placeholder="Type any city or river name (e.g. Munich, Lyon, Oxford, Venice, Porto)..."
+              placeholder="Type or paste location (e.g. Canal du Midi, Toulouse, France or Munich or Lake Geneva)..."
               className="flex-1 rounded-cozy border border-stone-200 bg-surface px-3 py-2 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
             />
             <button
@@ -493,7 +495,7 @@ export function SubmissionForm() {
               ) : (
                 <Search className="h-3.5 w-3.5" />
               )}
-              Set City
+              Set Location
             </button>
           </div>
           {cityError && (
@@ -562,6 +564,7 @@ export function SubmissionForm() {
                 onChange={(e) => {
                   const val = e.target.value === "" ? null : parseFloat(e.target.value)
                   setLatitude(val)
+                  setLocationName("")
                   if (val !== null && longitude !== null) {
                     setLocationStatus(`${val.toFixed(4)}°, ${longitude.toFixed(4)}° (Manual)`)
                   }
@@ -581,6 +584,7 @@ export function SubmissionForm() {
                 onChange={(e) => {
                   const val = e.target.value === "" ? null : parseFloat(e.target.value)
                   setLongitude(val)
+                  setLocationName("")
                   if (latitude !== null && val !== null) {
                     setLocationStatus(`${latitude.toFixed(4)}°, ${val.toFixed(4)}° (Manual)`)
                   }
@@ -594,9 +598,23 @@ export function SubmissionForm() {
 
         {/* Active Status Display */}
         <div className="flex items-center justify-between text-xs text-stone-500 pt-2 border-t border-stone-200/60">
-          <span className="truncate">
-            Target: <strong className="text-stone-700">{locationStatus}</strong>
-          </span>
+          <div className="flex items-center gap-1.5 truncate">
+            {latitude !== null ? (
+              <>
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                <span className="truncate">
+                  Target: <strong className="text-stone-800">{locationStatus}</strong>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                <span className="text-amber-700 font-medium truncate">
+                  Please set location (enter place above or click Auto-Detect GPS)
+                </span>
+              </>
+            )}
+          </div>
           <div className="flex items-center gap-1 shrink-0 text-stone-400">
             <Clock className="h-3 w-3" />
             <span>{format(timestamp, "MMM d, yyyy, h:mm a")}</span>

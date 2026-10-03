@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 
 /**
  * Forward geocoding API route.
- * Resolves city or place names to coordinates using OpenStreetMap Nominatim.
+ * Resolves city, river, lake, or full address queries to coordinates
+ * using OpenStreetMap Nominatim with progressive fallback.
  */
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
@@ -15,41 +16,61 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  const rawQuery = q.trim()
+
+  // Generate candidate search queries from specific to broad
+  const candidateQueries: string[] = [rawQuery]
+
+  // If query contains commas (e.g. "River X, City, Country"), add progressive sub-queries
+  if (rawQuery.includes(",")) {
+    const parts = rawQuery.split(",").map((p) => p.trim()).filter(Boolean)
+    if (parts.length >= 2) {
+      // e.g. "City, Country"
+      candidateQueries.push(parts.slice(1).join(", "))
+      // e.g. "City"
+      candidateQueries.push(parts[1])
+    }
+    // Also try without waterbody prefix like "River", "Ribeira", "Canal"
+    const cleanedFirst = parts[0]
+      .replace(/^(river|stream|lake|canal|fiume|ribeira|rio|lac)\s+/i, "")
+      .trim()
+    if (cleanedFirst && parts.length >= 2) {
+      candidateQueries.push(`${cleanedFirst}, ${parts.slice(1).join(", ")}`)
+    }
+  }
+
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-        q.trim(),
-      )}&format=json&limit=1`,
-      {
-        headers: {
-          "User-Agent": "StreamSense/0.1 (citizen-science-platform)",
-          Accept: "application/json",
+    for (const query of candidateQueries) {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          query,
+        )}&format=json&limit=1`,
+        {
+          headers: {
+            "User-Agent": "StreamSense/0.1 (citizen-science-platform)",
+            Accept: "application/json",
+          },
         },
-      },
+      )
+
+      if (!res.ok) continue
+
+      const data = await res.json()
+      if (data && data.length > 0) {
+        const item = data[0]
+        return NextResponse.json({
+          name: rawQuery,
+          display_name: item.display_name,
+          latitude: parseFloat(item.lat),
+          longitude: parseFloat(item.lon),
+        })
+      }
+    }
+
+    return NextResponse.json(
+      { error: `Location "${rawQuery}" not found. Try entering city or region name.` },
+      { status: 404 },
     )
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Geocoding service unavailable" },
-        { status: 502 },
-      )
-    }
-
-    const data = await res.json()
-    if (!data || data.length === 0) {
-      return NextResponse.json(
-        { error: "City or place not found. Please try another name." },
-        { status: 404 },
-      )
-    }
-
-    const item = data[0]
-    return NextResponse.json({
-      name: item.name || q.trim(),
-      display_name: item.display_name,
-      latitude: parseFloat(item.lat),
-      longitude: parseFloat(item.lon),
-    })
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to resolve location" },
