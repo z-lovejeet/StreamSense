@@ -25,9 +25,16 @@ router = APIRouter()
 _VALIDATED = (ObservationStatus.AUTO_VALIDATED, ObservationStatus.EXPERT_VALIDATED)
 
 
-def _apply_validated_filters(query, *, species, city, date_from, date_to, source):
+def _apply_validated_filters(
+    query, *, species, city, date_from, date_to, source, user: User | None = None
+):
     """Apply common filters to validated observation queries."""
     query = query.where(Observation.status.in_(_VALIDATED))
+
+    if user and user.role.value == "researcher":
+        query = query.where(Observation.deleted_by_researcher == False)
+    elif user and user.role.value == "volunteer":
+        query = query.where(Observation.deleted_by_volunteer == False)
 
     if species:
         query = query.where(Observation.top_species == species)
@@ -66,10 +73,22 @@ async def list_validated(
     count_query = select(func.count(Observation.id))
 
     query = _apply_validated_filters(
-        query, species=species, city=city, date_from=date_from, date_to=date_to, source=source
+        query,
+        species=species,
+        city=city,
+        date_from=date_from,
+        date_to=date_to,
+        source=source,
+        user=user,
     )
     count_query = _apply_validated_filters(
-        count_query, species=species, city=city, date_from=date_from, date_to=date_to, source=source
+        count_query,
+        species=species,
+        city=city,
+        date_from=date_from,
+        date_to=date_to,
+        source=source,
+        user=user,
     )
 
     total = (await session.execute(count_query)).scalar() or 0
@@ -105,6 +124,11 @@ async def get_validated_map(
         .options(selectinload(Observation.user))
         .where(Observation.status.in_(_VALIDATED))
     )
+
+    if user.role.value == "researcher":
+        query = query.where(Observation.deleted_by_researcher == False)
+    elif user.role.value == "volunteer":
+        query = query.where(Observation.deleted_by_volunteer == False)
 
     if species:
         query = query.where(Observation.top_species == species)

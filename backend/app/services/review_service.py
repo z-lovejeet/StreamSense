@@ -41,10 +41,14 @@ async def get_review_queue(
     query = (
         select(Observation)
         .options(selectinload(Observation.user))
-        .where(Observation.status == ObservationStatus.PENDING_REVIEW)
+        .where(
+            Observation.status == ObservationStatus.PENDING_REVIEW,
+            Observation.deleted_by_researcher == False,
+        )
     )
     count_query = select(func.count(Observation.id)).where(
-        Observation.status == ObservationStatus.PENDING_REVIEW
+        Observation.status == ObservationStatus.PENDING_REVIEW,
+        Observation.deleted_by_researcher == False,
     )
 
     if species:
@@ -74,7 +78,8 @@ async def get_queue_count(session: AsyncSession) -> int:
     """Get count of observations pending expert review."""
     result = await session.execute(
         select(func.count(Observation.id)).where(
-            Observation.status == ObservationStatus.PENDING_REVIEW
+            Observation.status == ObservationStatus.PENDING_REVIEW,
+            Observation.deleted_by_researcher == False,
         )
     )
     return result.scalar() or 0
@@ -215,7 +220,7 @@ async def process_review_action(
         notification = Notification(
             user_id=observation.user_id,
             type="review_complete",
-            title="Observation needs resubmission 📋",
+            title="Observation needs resubmission",
             message=(
                 action_data.rejection_reason
                 or "Your observation did not meet validation criteria. Please try resubmitting."

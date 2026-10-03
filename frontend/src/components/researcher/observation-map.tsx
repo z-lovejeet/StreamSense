@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css"
 import type { GeoJSONFeatureCollection } from "@/types"
 
 interface MapFeatureProperties {
+  id?: string | null
   species?: string | null
   confidence?: number | null
   location_name?: string | null
@@ -126,6 +127,7 @@ export function ObservationMap({
           ${props.confidence !== null ? `<span style="color:#57534e">Confidence: ${props.confidence}%</span><br/>` : ""}
           <span style="color:#44403c">${props.location_name || props.pilot_city || ""}</span><br/>
           <span style="color:#888;font-size:11px">${props.observed_at ? new Date(props.observed_at).toLocaleDateString() : ""}</span>
+          ${props.id ? `<div style="margin-top:8px"><a href="/researcher/observation/${props.id}" style="display:inline-block;padding:4px 8px;font-size:11px;font-weight:600;background:#2d9079;color:white;border-radius:6px;text-decoration:none">View Full Report &rarr;</a></div>` : ""}
         </div>`,
         { maxWidth: 220 },
       )

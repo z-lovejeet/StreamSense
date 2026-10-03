@@ -1,6 +1,8 @@
 "use client"
 
+import Link from "next/link"
 import { motion } from "framer-motion"
+import { Trash2, Eye } from "lucide-react"
 import { StatusBadge } from "@/components/shared/status-badge"
 import type { Observation } from "@/types"
 
@@ -23,11 +25,13 @@ export function ValidatedTable({
   sortKey,
   sortDir,
   onSort,
+  onDelete,
 }: {
   observations: Observation[]
   sortKey: string
   sortDir: "asc" | "desc"
   onSort: (key: string) => void
+  onDelete?: (id: string) => void
 }) {
   return (
     <motion.div
@@ -55,6 +59,9 @@ export function ValidatedTable({
                   </span>
                 </th>
               ))}
+              <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide text-stone-500">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone-50">
@@ -102,6 +109,28 @@ export function ValidatedTable({
                 </td>
                 <td className="px-4 py-3">
                   <StatusBadge status={obs.status} />
+                </td>
+                <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <Link
+                      href={`/researcher/observation/${obs.id}`}
+                      className="inline-flex items-center gap-1 rounded-cozy bg-stream-50 px-2.5 py-1 text-xs font-semibold text-stream-700 hover:bg-stream-100 transition-colors border border-stream-200"
+                      title="View Validated Ecological Report"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Report
+                    </Link>
+                    {onDelete && (
+                      <button
+                        type="button"
+                        onClick={() => onDelete(obs.id)}
+                        title="Remove from Researcher Panel"
+                        className="rounded p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

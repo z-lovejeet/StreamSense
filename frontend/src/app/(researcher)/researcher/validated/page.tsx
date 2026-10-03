@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react"
 import dynamic from "next/dynamic"
 import { motion } from "framer-motion"
-import { Table2, Map } from "lucide-react"
+import { Table2, Map, X, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { ValidatedTable } from "@/components/researcher/validated-table"
 import { PageSkeleton } from "@/components/shared/loading-skeleton"
@@ -36,6 +37,8 @@ export default function ValidatedDataPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   // Filters
   const [species, setSpecies] = useState("")
@@ -98,6 +101,21 @@ export default function ValidatedDataPage() {
     } else {
       setSortKey(key)
       setSortDir("desc")
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return
+    setDeleting(true)
+    try {
+      await api.delete(`/observations/${deleteTargetId}`)
+      toast.success("Observation removed from researcher panel.")
+      setDeleteTargetId(null)
+      await loadData()
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to remove observation.")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -193,6 +211,7 @@ export default function ValidatedDataPage() {
             sortKey={sortKey}
             sortDir={sortDir}
             onSort={handleSort}
+            onDelete={setDeleteTargetId}
           />
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
@@ -235,6 +254,46 @@ export default function ValidatedDataPage() {
             <span className="inline-block h-3 w-3 rounded-full bg-danger-500 border border-white shadow-sm" />
             Tolerant / Disease vector (BMWP ≤3)
           </span>
+        </div>
+      )}
+
+      {/* Researcher Delete Confirmation Modal */}
+      {deleteTargetId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-cozy-lg bg-surface p-6 shadow-cozy-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display text-lg text-stone-800">
+                Remove from Researcher Panel?
+              </h3>
+              <button
+                onClick={() => setDeleteTargetId(null)}
+                className="rounded-cozy p-1 text-stone-400 hover:bg-stone-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <p className="text-sm text-stone-600 leading-relaxed">
+              This will remove this observation from all research views, queues, and analytics.
+              The citizen volunteer will continue to see their observation in their volunteer history.
+            </p>
+            <div className="flex gap-3 justify-end pt-2">
+              <button
+                onClick={() => setDeleteTargetId(null)}
+                disabled={deleting}
+                className="rounded-cozy border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="inline-flex items-center gap-1.5 rounded-cozy bg-rose-600 px-4 py-2 text-sm font-medium text-white shadow-cozy-sm hover:bg-rose-700"
+              >
+                {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Confirm Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
