@@ -11,6 +11,7 @@ import {
   Clock,
   Loader2,
   Upload,
+  Navigation,
 } from "lucide-react"
 import { format } from "date-fns"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -22,6 +23,21 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 const COMPRESS_THRESHOLD = 5 * 1024 * 1024 // 5MB
 const MAX_DIMENSION = 1920
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]
+
+interface PilotCity {
+  name: string
+  country: string
+  lat: number
+  lon: number
+}
+
+const EU_PILOT_CITIES: PilotCity[] = [
+  { name: "Coimbra", country: "Portugal", lat: 40.2033, lon: -8.4103 },
+  { name: "Toulouse", country: "France", lat: 43.6047, lon: 1.4442 },
+  { name: "Benevento", country: "Italy", lat: 41.1297, lon: 14.7826 },
+  { name: "Ghent", country: "Belgium", lat: 51.0543, lon: 3.7174 },
+  { name: "Oslo", country: "Norway", lat: 59.9139, lon: 10.7522 },
+]
 
 /**
  * Submission form — photo upload + description + GPS + submit.
@@ -42,33 +58,50 @@ export function SubmissionForm() {
   const [latitude, setLatitude] = useState<number | null>(null)
   const [longitude, setLongitude] = useState<number | null>(null)
   const [locationStatus, setLocationStatus] = useState("Getting your location...")
+  const [detectingLocation, setDetectingLocation] = useState(false)
   const [timestamp] = useState(new Date())
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Get GPS on mount
-  useEffect(() => {
+  // Auto-detect device GPS
+  const detectDeviceLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setLocationStatus("Location not available")
+      setLocationStatus("Location not supported by device")
       return
     }
+    setDetectingLocation(true)
+    setLocationStatus("Detecting GPS...")
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLatitude(pos.coords.latitude)
         setLongitude(pos.coords.longitude)
         setLocationStatus(
-          `${pos.coords.latitude.toFixed(4)}°, ${pos.coords.longitude.toFixed(4)}°`,
+          `${pos.coords.latitude.toFixed(4)}°, ${pos.coords.longitude.toFixed(4)}° (Device GPS)`,
         )
+        setDetectingLocation(false)
       },
       (err) => {
         console.error("GPS error:", err)
-        setLocationStatus("Unable to get location")
+        setLocationStatus("Unable to get device location")
+        setDetectingLocation(false)
       },
       { enableHighAccuracy: true, timeout: 10000 },
     )
   }, [])
+
+  // Quick select an EU Pilot Site
+  const selectPilotCity = useCallback((city: PilotCity) => {
+    setLatitude(city.lat)
+    setLongitude(city.lon)
+    setLocationStatus(`${city.name}, ${city.country} (${city.lat}, ${city.lon})`)
+  }, [])
+
+  // Initial attempt to get GPS on mount
+  useEffect(() => {
+    detectDeviceLocation()
+  }, [detectDeviceLocation])
 
   // Compress image via Canvas if needed
   const compressImage = useCallback(
@@ -308,15 +341,110 @@ export function SubmissionForm() {
         </div>
       </div>
 
-      {/* Auto-Captured Metadata */}
-      <div className="flex flex-col gap-2 rounded-cozy border border-stone-200 bg-stone-50/50 px-4 py-3">
-        <div className="flex items-center gap-2 text-sm text-stone-600">
-          <MapPin className="h-4 w-4 text-stream-500" />
-          <span>{locationStatus}</span>
+      {/* Location Selection & Metadata */}
+      <div className="space-y-3 rounded-cozy border border-stone-200 bg-stone-50/50 p-4">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-semibold text-stone-800 flex items-center gap-1.5">
+            <MapPin className="h-4 w-4 text-stream-500" />
+            Location & Coordinates
+          </label>
+          <button
+            type="button"
+            onClick={detectDeviceLocation}
+            disabled={detectingLocation}
+            className="inline-flex items-center gap-1.5 rounded-cozy border border-stone-200 bg-surface px-2.5 py-1 text-xs font-medium text-stone-700 shadow-cozy-sm hover:bg-surface-hover hover:border-stream-300 transition-colors disabled:opacity-50"
+          >
+            {detectingLocation ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-stream-500" />
+            ) : (
+              <Navigation className="h-3.5 w-3.5 text-stream-500" />
+            )}
+            Auto-Detect GPS
+          </button>
         </div>
-        <div className="flex items-center gap-2 text-sm text-stone-600">
-          <Clock className="h-4 w-4 text-stream-500" />
-          <span>{format(timestamp, "MMM d, yyyy, h:mm a")}</span>
+
+        {/* Pilot Cities Quick Select */}
+        <div className="space-y-1.5">
+          <span className="text-xs font-medium text-stone-500 block">
+            EU Pilot Sites (One-Click Selection):
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {EU_PILOT_CITIES.map((city) => {
+              const isSelected =
+                latitude !== null &&
+                longitude !== null &&
+                Math.abs(latitude - city.lat) < 0.001 &&
+                Math.abs(longitude - city.lon) < 0.001
+
+              return (
+                <button
+                  key={city.name}
+                  type="button"
+                  onClick={() => selectPilotCity(city)}
+                  className={`rounded-cozy px-2.5 py-1 text-xs font-medium transition-all ${
+                    isSelected
+                      ? "bg-stream-500 text-white shadow-cozy-sm"
+                      : "border border-stone-200 bg-surface text-stone-700 hover:bg-stone-100"
+                  }`}
+                >
+                  {city.name}, {city.country}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Manual Latitude & Longitude Inputs */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <div>
+            <label className="text-xs text-stone-500 block mb-1">
+              Latitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={latitude ?? ""}
+              onChange={(e) => {
+                const val = e.target.value === "" ? null : parseFloat(e.target.value)
+                setLatitude(val)
+                if (val !== null && longitude !== null) {
+                  setLocationStatus(`${val.toFixed(4)}°, ${longitude.toFixed(4)}° (Manual)`)
+                }
+              }}
+              placeholder="e.g. 40.2033"
+              className="w-full rounded-cozy border border-stone-200 bg-surface px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-stone-500 block mb-1">
+              Longitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={longitude ?? ""}
+              onChange={(e) => {
+                const val = e.target.value === "" ? null : parseFloat(e.target.value)
+                setLongitude(val)
+                if (latitude !== null && val !== null) {
+                  setLocationStatus(`${latitude.toFixed(4)}°, ${val.toFixed(4)}° (Manual)`)
+                }
+              }}
+              placeholder="e.g. -8.4103"
+              className="w-full rounded-cozy border border-stone-200 bg-surface px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
+            />
+          </div>
+        </div>
+
+        {/* Active Status Display */}
+        <div className="flex items-center justify-between text-xs text-stone-500 pt-2 border-t border-stone-200/60">
+          <span className="truncate">
+            Target: <strong className="text-stone-700">{locationStatus}</strong>
+          </span>
+          <div className="flex items-center gap-1 shrink-0 text-stone-400">
+            <Clock className="h-3 w-3" />
+            <span>{format(timestamp, "MMM d, yyyy, h:mm a")}</span>
+          </div>
         </div>
       </div>
 
