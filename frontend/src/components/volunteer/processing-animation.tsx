@@ -15,18 +15,35 @@ interface AgentStep {
 }
 
 const INITIAL_STEPS: AgentStep[] = [
-  { id: "vision", label: "Identifying species...", status: "waiting" },
-  { id: "description", label: "Reading your description...", status: "waiting" },
-  { id: "metadata", label: "Checking location...", status: "waiting" },
-  { id: "quality", label: "Calculating quality score...", status: "waiting" },
-  { id: "impact", label: "Generating impact & FHIR...", status: "waiting" },
+  {
+    id: "vision",
+    label: "Analyzing stream scene, water quality & bioindicators...",
+    status: "processing",
+  },
+  {
+    id: "description",
+    label: "Extracting environmental parameters from description...",
+    status: "waiting",
+  },
+  {
+    id: "metadata",
+    label: "Cross-referencing GPS, weather & biodiversity registries...",
+    status: "waiting",
+  },
+  {
+    id: "quality",
+    label: "Calculating calibrated ecological quality score...",
+    status: "waiting",
+  },
+  {
+    id: "impact",
+    label: "Compiling HL7 FHIR R4 resource & health impact receipt...",
+    status: "waiting",
+  },
 ]
 
 /**
- * Processing animation — SSE-driven 5-step agent progress.
- *
- * DOC-09 Lines 416–444
- * DOC-11 Lines 595–625 (SSE consumption pattern)
+ * Processing animation — real-time agent progression with live summaries.
  */
 export function ProcessingAnimation({
   observationId,
@@ -38,10 +55,17 @@ export function ProcessingAnimation({
   onComplete: () => void
 }) {
   const [steps, setSteps] = useState<AgentStep[]>(INITIAL_STEPS)
-  const [progressPercent, setProgressPercent] = useState(0)
+  const [progressPercent, setProgressPercent] = useState(10)
+  const [secondsElapsed, setSecondsElapsed] = useState(0)
 
   useEffect(() => {
-    // Map agent names from SSE to our step IDs
+    const timer = setInterval(() => {
+      setSecondsElapsed((prev) => prev + 1)
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
     const agentMap: Record<string, string> = {
       vision: "vision",
       description: "description",
@@ -52,54 +76,63 @@ export function ProcessingAnimation({
       expert_brief: "impact",
     }
 
-    let completedCount = 0
-
-    // Poll status as fallback since SSE needs auth headers
     const pollInterval = setInterval(async () => {
       try {
-        const data = await api.get<{ status: string; agent_statuses: Array<{ agent: string; status: string }> }>(
-          `/observations/${observationId}/status`,
-        )
+        const data = await api.get<{
+          status: string
+          agent_statuses: Array<{ agent: string; status: string; summary?: string | null }>
+        }>(`/observations/${observationId}/status`)
 
-        const newSteps = [...INITIAL_STEPS]
-        data.agent_statuses.forEach((agentStatus) => {
-          const stepId = agentMap[agentStatus.agent]
-          if (!stepId) return
-          const step = newSteps.find((s) => s.id === stepId)
-          if (step) {
-            if (agentStatus.status === "success" || agentStatus.status === "complete") {
-              step.status = "complete"
-            } else if (agentStatus.status === "error") {
-              step.status = "error"
-            } else if (agentStatus.status !== "pending") {
-              step.status = "processing"
+        setSteps((prevSteps) => {
+          const nextSteps = prevSteps.map((step) => ({ ...step }))
+
+          data.agent_statuses.forEach((agentStatus) => {
+            const stepId = agentMap[agentStatus.agent]
+            if (!stepId) return
+            const step = nextSteps.find((s) => s.id === stepId)
+            if (step) {
+              if (agentStatus.status === "success" || agentStatus.status === "complete") {
+                step.status = "complete"
+                if (agentStatus.summary) {
+                  step.summary = agentStatus.summary
+                }
+              } else if (agentStatus.status === "error") {
+                step.status = "error"
+                if (agentStatus.summary) {
+                  step.summary = agentStatus.summary
+                }
+              } else if (agentStatus.status !== "pending") {
+                step.status = "processing"
+              }
             }
+          })
+
+          // Mark first waiting step as processing if pipeline is still active
+          const firstPending = nextSteps.find((s) => s.status === "waiting")
+          if (firstPending && data.status === "processing") {
+            firstPending.status = "processing"
           }
+
+          const completedCount = nextSteps.filter((s) => s.status === "complete").length
+          const calcPercent = Math.min(
+            100,
+            Math.max(15, Math.round((completedCount / nextSteps.length) * 100)),
+          )
+          setProgressPercent(data.status === "processing" ? Math.min(calcPercent, 95) : 100)
+
+          return nextSteps
         })
 
-        // Set first non-complete step to processing
-        const firstPending = newSteps.find((s) => s.status === "waiting")
-        if (firstPending && data.status === "processing") {
-          firstPending.status = "processing"
-        }
-
-        completedCount = newSteps.filter((s) => s.status === "complete").length
-        setProgressPercent(Math.round((completedCount / newSteps.length) * 100))
-        setSteps(newSteps)
-
-        // Pipeline complete
-        if (
-          data.status !== "processing" &&
-          data.status !== "submitted"
-        ) {
+        // Pipeline completed
+        if (data.status !== "processing" && data.status !== "submitted") {
+          setProgressPercent(100)
           clearInterval(pollInterval)
-          // Small delay for the final animation
-          setTimeout(onComplete, 800)
+          setTimeout(onComplete, 900)
         }
       } catch {
-        // Silently retry
+        // Silently retry polling
       }
-    }, 1500)
+    }, 1000)
 
     return () => clearInterval(pollInterval)
   }, [observationId, onComplete])

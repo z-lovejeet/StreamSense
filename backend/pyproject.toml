@@ -14,7 +14,6 @@ dependencies = [
     "httpx>=0.28.1",
     "passlib>=1.7.4",
     "pillow>=12.3.0",
-    "pybioclip>=2.1.6",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
     "python-dotenv>=1.2.3",

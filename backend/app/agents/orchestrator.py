@@ -207,22 +207,39 @@ async def run_pipeline(
 
 
 def _summarize_agent(name: str, result: dict[str, Any]) -> str:
-    """Generate a short human-readable summary for SSE events."""
-    if result["status"] == "error":
-        return f"{name} encountered an issue"
+    """Generate a short human-readable summary for SSE events and status polling."""
+    if result.get("status") == "error":
+        return f"{name.capitalize()} error: {str(result.get('error', 'check details'))[:60]}"
 
     if name == "vision":
-        sp = result.get("top_species", "Unknown")
+        sp = result.get("top_species")
         conf = result.get("top_confidence", 0)
-        return f"{sp} identified ({conf:.0%} confidence)"
+        wq = result.get("water_quality", {})
+        clarity = wq.get("clarity", "monitored")
+        if sp and conf > 0.3:
+            return f"Found {sp} ({conf:.0%} conf) · {clarity.replace('_', ' ')} water"
+        rating = wq.get("water_rating", "moderate")
+        return f"{clarity.replace('_', ' ').capitalize()} water · {rating.replace('_', ' ')} status"
     elif name == "description":
         params = result.get("params", {})
         count = sum(1 for v in params.values() if v is not None)
-        return f"{count} parameters extracted"
+        return f"{count} environmental parameters extracted"
     elif name == "metadata":
         anomalies = result.get("validation", {}).get("anomaly_count", 0)
+        loc = result.get("pilot_city") or result.get("validation", {}).get("gps_location_name") or "Area"
         if anomalies == 0:
-            return "No anomalies"
-        return f"{anomalies} anomaly(ies) detected"
+            return f"Verified near {loc} · No anomalies"
+        return f"Flagged {anomalies} anomaly(ies) at {loc}"
+    elif name == "quality":
+        score = result.get("score", 0)
+        routing = result.get("routing", "review")
+        return f"Score {score}/100 · {routing.replace('_', ' ').title()}"
+    elif name == "fhir":
+        return f"FHIR R4 Observation resource generated ({result.get('validation_status', 'valid')})"
+    elif name == "impact":
+        return result.get("headline") or "Community health impact receipt created"
+    elif name == "expert_brief":
+        prio = result.get("priority", "medium")
+        return f"Expert triage brief prepared ({prio} priority)"
 
     return "Complete"
