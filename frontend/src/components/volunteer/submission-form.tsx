@@ -12,6 +12,9 @@ import {
   Loader2,
   Upload,
   Navigation,
+  Search,
+  SlidersHorizontal,
+  Check,
 } from "lucide-react"
 import { format } from "date-fns"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -39,6 +42,51 @@ const EU_PILOT_CITIES: PilotCity[] = [
   { name: "Oslo", country: "Norway", lat: 59.9139, lon: 10.7522 },
 ]
 
+const COMMON_CITIES: Record<string, { lat: number; lon: number; name: string }> = {
+  coimbra: { lat: 40.2033, lon: -8.4103, name: "Coimbra, Portugal" },
+  toulouse: { lat: 43.6047, lon: 1.4442, name: "Toulouse, France" },
+  benevento: { lat: 41.1297, lon: 14.7826, name: "Benevento, Italy" },
+  ghent: { lat: 51.0543, lon: 3.7174, name: "Ghent, Belgium" },
+  gent: { lat: 51.0543, lon: 3.7174, name: "Ghent, Belgium" },
+  oslo: { lat: 59.9139, lon: 10.7522, name: "Oslo, Norway" },
+  munich: { lat: 48.1371, lon: 11.5754, name: "Munich, Germany" },
+  münchen: { lat: 48.1371, lon: 11.5754, name: "Munich, Germany" },
+  berlin: { lat: 52.5200, lon: 13.4050, name: "Berlin, Germany" },
+  paris: { lat: 48.8566, lon: 2.3522, name: "Paris, France" },
+  lyon: { lat: 45.7640, lon: 4.8357, name: "Lyon, France" },
+  marseille: { lat: 43.2965, lon: 5.3698, name: "Marseille, France" },
+  madrid: { lat: 40.4168, lon: -3.7038, name: "Madrid, Spain" },
+  barcelona: { lat: 41.3851, lon: 2.1734, name: "Barcelona, Spain" },
+  valencia: { lat: 39.4699, lon: -0.3763, name: "Valencia, Spain" },
+  seville: { lat: 37.3891, lon: -5.9845, name: "Seville, Spain" },
+  rome: { lat: 41.9028, lon: 12.4964, name: "Rome, Italy" },
+  milan: { lat: 45.4642, lon: 9.1900, name: "Milan, Italy" },
+  florence: { lat: 43.7696, lon: 11.2558, name: "Florence, Italy" },
+  venice: { lat: 45.4408, lon: 12.3155, name: "Venice, Italy" },
+  naples: { lat: 40.8518, lon: 14.2681, name: "Naples, Italy" },
+  lisbon: { lat: 38.7223, lon: -9.1393, name: "Lisbon, Portugal" },
+  porto: { lat: 41.1579, lon: -8.6291, name: "Porto, Portugal" },
+  brussels: { lat: 50.8503, lon: 4.3517, name: "Brussels, Belgium" },
+  antwerp: { lat: 51.2194, lon: 4.4025, name: "Antwerp, Belgium" },
+  amsterdam: { lat: 52.3676, lon: 4.9041, name: "Amsterdam, Netherlands" },
+  rotterdam: { lat: 51.9244, lon: 4.4777, name: "Rotterdam, Netherlands" },
+  vienna: { lat: 48.2082, lon: 16.3738, name: "Vienna, Austria" },
+  zurich: { lat: 47.3769, lon: 8.5417, name: "Zurich, Switzerland" },
+  geneva: { lat: 46.2044, lon: 6.1432, name: "Geneva, Switzerland" },
+  london: { lat: 51.5074, lon: -0.1278, name: "London, UK" },
+  oxford: { lat: 51.7520, lon: -1.2577, name: "Oxford, UK" },
+  cambridge: { lat: 52.2053, lon: 0.1218, name: "Cambridge, UK" },
+  edinburgh: { lat: 55.9533, lon: -3.1883, name: "Edinburgh, UK" },
+  dublin: { lat: 53.3498, lon: -6.2603, name: "Dublin, Ireland" },
+  stockholm: { lat: 59.3293, lon: 18.0686, name: "Stockholm, Sweden" },
+  copenhagen: { lat: 55.6761, lon: 12.5683, name: "Copenhagen, Denmark" },
+  helsinki: { lat: 60.1699, lon: 24.9384, name: "Helsinki, Finland" },
+  warsaw: { lat: 52.2297, lon: 21.0122, name: "Warsaw, Poland" },
+  prague: { lat: 50.0755, lon: 14.4378, name: "Prague, Czech Republic" },
+  budapest: { lat: 47.4979, lon: 19.0402, name: "Budapest, Hungary" },
+  athens: { lat: 37.9838, lon: 23.7275, name: "Athens, Greece" },
+}
+
 /**
  * Submission form — photo upload + description + GPS + submit.
  *
@@ -59,6 +107,10 @@ export function SubmissionForm() {
   const [longitude, setLongitude] = useState<number | null>(null)
   const [locationStatus, setLocationStatus] = useState("Getting your location...")
   const [detectingLocation, setDetectingLocation] = useState(false)
+  const [cityInput, setCityInput] = useState("")
+  const [searchingCity, setSearchingCity] = useState(false)
+  const [cityError, setCityError] = useState<string | null>(null)
+  const [showManualCoordinates, setShowManualCoordinates] = useState(false)
   const [timestamp] = useState(new Date())
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -73,6 +125,7 @@ export function SubmissionForm() {
     }
     setDetectingLocation(true)
     setLocationStatus("Detecting GPS...")
+    setCityError(null)
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLatitude(pos.coords.latitude)
@@ -93,10 +146,54 @@ export function SubmissionForm() {
 
   // Quick select an EU Pilot Site
   const selectPilotCity = useCallback((city: PilotCity) => {
+    setCityInput(`${city.name}, ${city.country}`)
+    setCityError(null)
     setLatitude(city.lat)
     setLongitude(city.lon)
     setLocationStatus(`${city.name}, ${city.country} (${city.lat}, ${city.lon})`)
   }, [])
+
+  // Resolve city name to coordinates
+  const handleCitySearch = useCallback(
+    async (customName?: string) => {
+      const query = (customName ?? cityInput).trim()
+      if (!query) return
+
+      setSearchingCity(true)
+      setCityError(null)
+
+      const normalized = query.toLowerCase()
+      if (COMMON_CITIES[normalized]) {
+        const item = COMMON_CITIES[normalized]
+        setLatitude(item.lat)
+        setLongitude(item.lon)
+        setLocationStatus(`${item.name} (${item.lat.toFixed(4)}°, ${item.lon.toFixed(4)}°)`)
+        setCityInput(item.name)
+        setSearchingCity(false)
+        return
+      }
+
+      try {
+        const res = await fetch(`/api/geocode?q=${encodeURIComponent(query)}`)
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          throw new Error(errData.error || "City not found. Please try another name.")
+        }
+        const data = await res.json()
+        setLatitude(data.latitude)
+        setLongitude(data.longitude)
+        const displayName = data.display_name.split(",").slice(0, 2).join(",")
+        setLocationStatus(`${displayName} (${data.latitude.toFixed(4)}°, ${data.longitude.toFixed(4)}°)`)
+        setCityInput(displayName)
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Failed to locate city"
+        setCityError(msg)
+      } finally {
+        setSearchingCity(false)
+      }
+    },
+    [cityInput],
+  )
 
   // Initial attempt to get GPS on mount
   useEffect(() => {
@@ -346,7 +443,7 @@ export function SubmissionForm() {
         <div className="flex items-center justify-between">
           <label className="text-sm font-semibold text-stone-800 flex items-center gap-1.5">
             <MapPin className="h-4 w-4 text-stream-500" />
-            Location & Coordinates
+            Location & City
           </label>
           <button
             type="button"
@@ -363,10 +460,51 @@ export function SubmissionForm() {
           </button>
         </div>
 
-        {/* Pilot Cities Quick Select */}
+        {/* Enter City Name Manually */}
         <div className="space-y-1.5">
+          <label className="text-xs font-medium text-stone-700 block">
+            Enter City Name (Manual):
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={cityInput}
+              onChange={(e) => {
+                setCityInput(e.target.value)
+                setCityError(null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleCitySearch()
+                }
+              }}
+              placeholder="Type any city or river name (e.g. Munich, Lyon, Oxford, Venice, Porto)..."
+              className="flex-1 rounded-cozy border border-stone-200 bg-surface px-3 py-2 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
+            />
+            <button
+              type="button"
+              onClick={() => handleCitySearch()}
+              disabled={searchingCity || !cityInput.trim()}
+              className="inline-flex items-center gap-1.5 rounded-cozy bg-stream-500 px-3.5 py-2 text-xs font-semibold text-white shadow-cozy-sm hover:bg-stream-600 disabled:opacity-50 transition-colors shrink-0"
+            >
+              {searchingCity ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Search className="h-3.5 w-3.5" />
+              )}
+              Set City
+            </button>
+          </div>
+          {cityError && (
+            <p className="text-xs text-danger-600 mt-1">{cityError}</p>
+          )}
+        </div>
+
+        {/* Pilot Cities Quick Select */}
+        <div className="space-y-1.5 pt-1">
           <span className="text-xs font-medium text-stone-500 block">
-            EU Pilot Sites (One-Click Selection):
+            Or Quick-Select EU Pilot Basin:
           </span>
           <div className="flex flex-wrap gap-1.5">
             {EU_PILOT_CITIES.map((city) => {
@@ -394,47 +532,65 @@ export function SubmissionForm() {
           </div>
         </div>
 
-        {/* Manual Latitude & Longitude Inputs */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <div>
-            <label className="text-xs text-stone-500 block mb-1">
-              Latitude
-            </label>
-            <input
-              type="number"
-              step="any"
-              value={latitude ?? ""}
-              onChange={(e) => {
-                const val = e.target.value === "" ? null : parseFloat(e.target.value)
-                setLatitude(val)
-                if (val !== null && longitude !== null) {
-                  setLocationStatus(`${val.toFixed(4)}°, ${longitude.toFixed(4)}° (Manual)`)
-                }
-              }}
-              placeholder="e.g. 40.2033"
-              className="w-full rounded-cozy border border-stone-200 bg-surface px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-stone-500 block mb-1">
-              Longitude
-            </label>
-            <input
-              type="number"
-              step="any"
-              value={longitude ?? ""}
-              onChange={(e) => {
-                const val = e.target.value === "" ? null : parseFloat(e.target.value)
-                setLongitude(val)
-                if (latitude !== null && val !== null) {
-                  setLocationStatus(`${latitude.toFixed(4)}°, ${val.toFixed(4)}° (Manual)`)
-                }
-              }}
-              placeholder="e.g. -8.4103"
-              className="w-full rounded-cozy border border-stone-200 bg-surface px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
-            />
-          </div>
+        {/* Optional Coordinate Toggle */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={() => setShowManualCoordinates((prev) => !prev)}
+            className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-stone-800 transition-colors"
+          >
+            <SlidersHorizontal className="h-3 w-3 text-stone-400" />
+            <span>
+              {showManualCoordinates
+                ? "Hide coordinates"
+                : "Show exact GPS coordinates (optional)"}
+            </span>
+          </button>
         </div>
+
+        {/* Manual Latitude & Longitude Inputs (Optional) */}
+        {showManualCoordinates && (
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div>
+              <label className="text-xs text-stone-500 block mb-1">
+                Latitude
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={latitude ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? null : parseFloat(e.target.value)
+                  setLatitude(val)
+                  if (val !== null && longitude !== null) {
+                    setLocationStatus(`${val.toFixed(4)}°, ${longitude.toFixed(4)}° (Manual)`)
+                  }
+                }}
+                placeholder="e.g. 40.2033"
+                className="w-full rounded-cozy border border-stone-200 bg-surface px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-stone-500 block mb-1">
+                Longitude
+              </label>
+              <input
+                type="number"
+                step="any"
+                value={longitude ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value === "" ? null : parseFloat(e.target.value)
+                  setLongitude(val)
+                  if (latitude !== null && val !== null) {
+                    setLocationStatus(`${latitude.toFixed(4)}°, ${val.toFixed(4)}° (Manual)`)
+                  }
+                }}
+                placeholder="e.g. -8.4103"
+                className="w-full rounded-cozy border border-stone-200 bg-surface px-3 py-1.5 text-xs text-stone-800 placeholder:text-stone-400 focus:border-stream-400 focus:ring-1 focus:ring-stream-400"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Active Status Display */}
         <div className="flex items-center justify-between text-xs text-stone-500 pt-2 border-t border-stone-200/60">
