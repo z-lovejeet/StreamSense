@@ -27,13 +27,20 @@ async def get_summary(
 
     Returns total counts by status, average confidence, and average pipeline time.
     """
-    # Total observations
-    total = (await session.execute(select(func.count(Observation.id)))).scalar() or 0
+    # Total observations (excluding deleted)
+    total = (
+        await session.execute(
+            select(func.count(Observation.id)).where(
+                Observation.deleted_by_researcher == False
+            )
+        )
+    ).scalar() or 0
 
     # Counts by status
     status_counts = {}
     result = await session.execute(
         select(Observation.status, func.count(Observation.id))
+        .where(Observation.deleted_by_researcher == False)
         .group_by(Observation.status)
     )
     for row in result.all():
@@ -45,7 +52,7 @@ async def get_summary(
         select(
             func.avg(Observation.confidence_score),
             func.avg(Observation.pipeline_time_seconds),
-        )
+        ).where(Observation.deleted_by_researcher == False)
     )
     avgs = avg_result.one()
 
@@ -84,6 +91,7 @@ async def get_timeline(
                 )
             ).label("validated"),
         )
+        .where(Observation.deleted_by_researcher == False)
         .group_by(func.date(Observation.observed_at))
         .order_by(func.date(Observation.observed_at))
     )
@@ -115,7 +123,10 @@ async def get_species_distribution(
             func.count(Observation.id).label("count"),
             func.avg(Observation.top_confidence).label("avg_confidence"),
         )
-        .where(Observation.top_species.is_not(None))
+        .where(
+            Observation.top_species.is_not(None),
+            Observation.deleted_by_researcher == False,
+        )
         .group_by(Observation.top_species)
         .order_by(func.count(Observation.id).desc())
     )
@@ -157,7 +168,10 @@ async def get_confidence_distribution(
             ).label("range"),
             func.count(Observation.id).label("count"),
         )
-        .where(Observation.confidence_score.is_not(None))
+        .where(
+            Observation.confidence_score.is_not(None),
+            Observation.deleted_by_researcher == False,
+        )
         .group_by("range")
     )
 
