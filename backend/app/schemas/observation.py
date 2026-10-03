@@ -28,6 +28,7 @@ class ObservationCreate(BaseModel):
     latitude: float
     longitude: float
     timestamp: datetime
+    location_name: str | None = Field(default=None, max_length=255)
 
 
 class ObservationResponse(BaseModel):
@@ -89,6 +90,7 @@ class AgentStatus(BaseModel):
 
     agent: str
     status: str
+    summary: str | None = None
 
 
 class ObservationStatusResponse(BaseModel):

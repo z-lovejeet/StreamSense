@@ -87,9 +87,13 @@ async def get_observation(
     if not obs:
         raise NotFoundError("Observation not found")
 
-    # Ownership check for volunteers
-    if user.role == UserRole.VOLUNTEER and obs.user_id != user.id:
-        raise ForbiddenError("Cannot access this observation")
+    # Scoped deletion check
+    if user.role == UserRole.VOLUNTEER:
+        if obs.user_id != user.id or obs.deleted_by_volunteer:
+            raise NotFoundError("Observation not found")
+    elif user.role == UserRole.RESEARCHER:
+        if obs.deleted_by_researcher:
+            raise NotFoundError("Observation not found")
 
     return ObservationDetailResponse(
         observation=ObservationResponse.model_validate(obs),
@@ -101,6 +105,21 @@ async def get_observation(
     )
 
 
+@router.delete("/{observation_id}", status_code=204)
+async def delete_observation(
+    observation_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Delete an observation adhering to scoped volunteer/researcher rules.
+
+    - Volunteer deleting unvalidated observation: removes from volunteer AND researcher panel.
+    - Volunteer deleting validated observation: removes from volunteer view, stays on researcher panel.
+    - Researcher deleting observation: removes from researcher panel, preserves volunteer view.
+    """
+    await observation_service.delete_observation(observation_id, user, session)
+
+
 @router.get("/{observation_id}/status", response_model=ObservationStatusResponse)
 async def get_observation_status(
     observation_id: uuid.UUID,
@@ -108,14 +127,18 @@ async def get_observation_status(
     session: AsyncSession = Depends(get_session),
 ):
     """Get pipeline processing status per agent (polling fallback)."""
-    # Quick ownership check
+    # Quick ownership and deletion check
     from app.models.observation import Observation
 
     obs = await session.get(Observation, observation_id)
     if not obs:
         raise NotFoundError("Observation not found")
-    if user.role == UserRole.VOLUNTEER and obs.user_id != user.id:
-        raise ForbiddenError("Cannot access this observation")
+    if user.role == UserRole.VOLUNTEER:
+        if obs.user_id != user.id or obs.deleted_by_volunteer:
+            raise NotFoundError("Observation not found")
+    elif user.role == UserRole.RESEARCHER:
+        if obs.deleted_by_researcher:
+            raise NotFoundError("Observation not found")
 
     return await observation_service.get_observation_status(observation_id, session)
 

@@ -8,7 +8,7 @@ and accumulates denormalized results from the 7 AI agents.
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Enum, Float, Index, Integer, String, Text, text
+from sqlalchemy import Boolean, Column, Enum, Float, Index, Integer, String, Text, text
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey
@@ -62,6 +62,12 @@ class Observation(Base):
     impact_headline = Column(String(255), nullable=True)
     pipeline_time_seconds = Column(Float, nullable=True)
     pipeline_error = Column(Text, nullable=True)
+    deleted_by_volunteer = Column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    deleted_by_researcher = Column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     created_at = Column(
         TIMESTAMP(timezone=True),
         nullable=False,

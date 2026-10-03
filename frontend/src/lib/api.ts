@@ -48,6 +48,9 @@ async function handleResponse<T>(res: Response): Promise<T> {
     }))
     throw new ApiError(data, res.status)
   }
+  if (res.status === 204) {
+    return {} as T
+  }
   return res.json()
 }
 
@@ -64,6 +67,23 @@ export const api = {
       method: "POST",
       headers: await getAuthHeaders(),
       body: body ? JSON.stringify(body) : undefined,
+    })
+    return handleResponse<T>(res)
+  },
+
+  put: async <T = unknown>(path: string, body?: unknown): Promise<T> => {
+    const res = await fetch(`${API_URL}/api/v1${path}`, {
+      method: "PUT",
+      headers: await getAuthHeaders(),
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return handleResponse<T>(res)
+  },
+
+  delete: async <T = unknown>(path: string): Promise<T> => {
+    const res = await fetch(`${API_URL}/api/v1${path}`, {
+      method: "DELETE",
+      headers: await getAuthHeaders(),
     })
     return handleResponse<T>(res)
   },

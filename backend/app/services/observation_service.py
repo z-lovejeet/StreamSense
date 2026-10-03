@@ -55,6 +55,7 @@ async def create_observation(
         description=data.description,
         latitude=data.latitude,
         longitude=data.longitude,
+        location_name=data.location_name,
         observed_at=data.timestamp,
         status=ObservationStatus.PROCESSING,
     )
@@ -111,10 +112,19 @@ async def list_observations(
     query = select(Observation).options(selectinload(Observation.user))
     count_query = select(func.count(Observation.id))
 
-    # Role-based filtering
+    # Role-based filtering with soft-delete exclusion
     if user and user.role.value == "volunteer":
-        query = query.where(Observation.user_id == user.id)
-        count_query = count_query.where(Observation.user_id == user.id)
+        query = query.where(
+            Observation.user_id == user.id,
+            Observation.deleted_by_volunteer == False,
+        )
+        count_query = count_query.where(
+            Observation.user_id == user.id,
+            Observation.deleted_by_volunteer == False,
+        )
+    elif user and user.role.value == "researcher":
+        query = query.where(Observation.deleted_by_researcher == False)
+        count_query = count_query.where(Observation.deleted_by_researcher == False)
 
     # Status filter
     if status:
@@ -139,7 +149,7 @@ async def get_observation_status(
     observation_id: uuid.UUID,
     session: AsyncSession,
 ) -> ObservationStatusResponse:
-    """Get pipeline processing status for an observation."""
+    """Get pipeline processing status for an observation with real-time agent summaries."""
     observation = await session.get(Observation, observation_id)
     if not observation:
         from app.middleware.errors import NotFoundError
@@ -153,22 +163,73 @@ async def get_observation_status(
     )
     ai_results = list(result.scalars().all())
 
-    # Build agent status list
+    # Build agent status map with summary
     all_agents = ["vision", "description", "metadata", "quality", "fhir", "impact", "expert_brief"]
-    completed_agents = {r.agent_name: r.status for r in ai_results}
+    completed_agents: dict[str, tuple[str, str | None]] = {}
+    for r in ai_results:
+        summary_val = None
+        if isinstance(r.result, dict):
+            summary_val = r.result.get("summary")
+        completed_agents[r.agent_name] = (r.status, summary_val)
 
     agent_statuses = []
     for agent in all_agents:
         if agent in completed_agents:
-            agent_statuses.append(AgentStatus(agent=agent, status=completed_agents[agent]))
+            st, sm = completed_agents[agent]
+            agent_statuses.append(AgentStatus(agent=agent, status=st, summary=sm))
         elif observation.status == ObservationStatus.PROCESSING:
-            agent_statuses.append(AgentStatus(agent=agent, status="pending"))
-        # Skip agents that weren't run (e.g., expert_brief when auto_validated)
+            agent_statuses.append(AgentStatus(agent=agent, status="pending", summary=None))
+        # Skip agents that were not triggered (e.g. expert_brief on auto_validate)
 
     return ObservationStatusResponse(
         status=observation.status.value if isinstance(observation.status, ObservationStatus) else str(observation.status),
         agent_statuses=agent_statuses,
     )
+
+
+async def delete_observation(
+    observation_id: uuid.UUID,
+    user: User,
+    session: AsyncSession,
+) -> bool:
+    """Delete an observation adhering to scoped volunteer/researcher rules.
+
+    - If volunteer deletes an UNVALIDATED observation:
+      Removes from volunteer view AND removes from researcher review queue.
+    - If volunteer deletes a VALIDATED observation:
+      Hides from volunteer view, but remains on researcher panel.
+    - If researcher deletes an observation:
+      Hides from researcher panel, but preserves volunteer view.
+    """
+    observation = await session.get(Observation, observation_id)
+    if not observation:
+        from app.middleware.errors import NotFoundError
+        raise NotFoundError("Observation not found")
+
+    from app.middleware.errors import ForbiddenError
+
+    is_validated = observation.status in (
+        ObservationStatus.AUTO_VALIDATED,
+        ObservationStatus.EXPERT_VALIDATED,
+    )
+
+    if user.role.value == "volunteer":
+        if observation.user_id != user.id:
+            raise ForbiddenError("You cannot delete another volunteer's observation")
+        observation.deleted_by_volunteer = True
+        if not is_validated:
+            # Unvalidated observations are also removed from researcher queue
+            observation.deleted_by_researcher = True
+    elif user.role.value == "researcher":
+        # Researcher deletion only removes from researcher panel
+        observation.deleted_by_researcher = True
+    else:
+        observation.deleted_by_volunteer = True
+        observation.deleted_by_researcher = True
+
+    observation.updated_at = datetime.now(timezone.utc)
+    await session.commit()
+    return True
 
 
 # ── Background pipeline task ────────────────────────────────────
@@ -185,7 +246,8 @@ async def _run_pipeline_task(
     """Run the 7-agent pipeline and persist all results to the database.
 
     This runs as a background asyncio task — not inside a request context.
-    Uses its own database session.
+    Uses its own database session and commits each agent result immediately
+    so clients polling get real-time telemetry.
     """
     async with async_session() as session:
         try:
@@ -198,12 +260,12 @@ async def _run_pipeline_task(
                         observation_id=observation_id,
                         agent_name=agent_data["agent"],
                         agent_version="1.0",
-                        model_used=agent_data.get("model", "unknown"),
+                        model_used=agent_data.get("model", "gemini-flash"),
                         status=agent_data["status"],
                         result=agent_data,
                     )
                     session.add(ai_result)
-                    await session.flush()
+                    await session.commit()
 
                 elif event["event"] == "pipeline_complete":
                     data = event["data"]
@@ -234,11 +296,11 @@ async def _run_pipeline_task(
                     obs.impact_text = impact.get("impact_text")
                     obs.impact_headline = impact.get("headline")
 
-                    # Location from metadata
+                    # Location from metadata (preserve user-provided location_name)
                     metadata = results.get("metadata", {})
                     validation = metadata.get("validation", {})
-                    obs.location_name = validation.get("gps_location_name")
-                    obs.pilot_city = metadata.get("pilot_city")
+                    obs.location_name = obs.location_name or validation.get("gps_location_name")
+                    obs.pilot_city = metadata.get("pilot_city") or obs.pilot_city
 
                     # Persist FHIR resource if generated
                     fhir = results.get("fhir")
