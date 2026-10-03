@@ -63,6 +63,7 @@ export interface ObservationCreate {
   description?: string
   latitude: number
   longitude: number
+  location_name?: string
   timestamp: string
 }
 
@@ -129,7 +130,20 @@ export interface FHIRResource {
   sandbox_id: string | null
   created_at: string
   posted_at: string | null
+  // Linked observation fields
+  top_species?: string | null
+  location_name?: string | null
+  pilot_city?: string | null
+  image_url?: string | null
+  image_thumbnail_url?: string | null
+  confidence_score?: number | null
+  volunteer_name?: string | null
+  observed_at?: string | null
+  observation_status?: string | null
+  bmwp_score?: number | null
+  water_quality_indication?: string | null
 }
+
 
 // ── Observation Detail ──
 

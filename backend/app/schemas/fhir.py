@@ -27,3 +27,17 @@ class FHIRResourceResponse(BaseModel):
     sandbox_id: str | None = None
     created_at: datetime
     posted_at: datetime | None = None
+
+    # Linked observation details
+    top_species: str | None = None
+    location_name: str | None = None
+    pilot_city: str | None = None
+    image_url: str | None = None
+    image_thumbnail_url: str | None = None
+    confidence_score: int | None = None
+    volunteer_name: str | None = None
+    observed_at: datetime | None = None
+    observation_status: str | None = None
+    bmwp_score: int | None = None
+    water_quality_indication: str | None = None
+

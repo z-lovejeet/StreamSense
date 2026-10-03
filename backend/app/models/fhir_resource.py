@@ -44,3 +44,113 @@ class FHIRResource(Base):
 
     # Relationships
     observation = relationship("Observation", back_populates="fhir_resource")
+
+    @property
+    def top_species(self) -> str | None:
+        try:
+            return self.observation.top_species if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def location_name(self) -> str | None:
+        try:
+            return self.observation.location_name if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def pilot_city(self) -> str | None:
+        try:
+            return self.observation.pilot_city if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def image_url(self) -> str | None:
+        try:
+            return self.observation.image_url if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def image_thumbnail_url(self) -> str | None:
+        try:
+            if self.observation:
+                return self.observation.image_thumbnail_url or self.observation.image_url
+            return None
+        except Exception:
+            return None
+
+    @property
+    def confidence_score(self) -> int | None:
+        try:
+            return self.observation.confidence_score if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def volunteer_name(self) -> str | None:
+        try:
+            return self.observation.volunteer_name if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def observed_at(self) -> datetime | None:
+        try:
+            return self.observation.observed_at if self.observation else None
+        except Exception:
+            return None
+
+    @property
+    def observation_status(self) -> str | None:
+        try:
+            if self.observation and self.observation.status:
+                return (
+                    self.observation.status.value
+                    if hasattr(self.observation.status, "value")
+                    else str(self.observation.status)
+                )
+            return None
+        except Exception:
+            return None
+
+    @property
+    def bmwp_score(self) -> int | None:
+        try:
+            if not self.resource_json or not isinstance(self.resource_json, dict):
+                return None
+            comps = self.resource_json.get("component", [])
+            for c in comps:
+                codes = [
+                    item.get("code")
+                    for item in c.get("code", {}).get("coding", [])
+                    if isinstance(item, dict)
+                ]
+                if "bmwp-score" in codes:
+                    vq = c.get("valueQuantity", {})
+                    if "value" in vq:
+                        return int(vq["value"])
+            return None
+        except Exception:
+            return None
+
+    @property
+    def water_quality_indication(self) -> str | None:
+        try:
+            if not self.resource_json or not isinstance(self.resource_json, dict):
+                return None
+            comps = self.resource_json.get("component", [])
+            for c in comps:
+                codes = [
+                    item.get("code")
+                    for item in c.get("code", {}).get("coding", [])
+                    if isinstance(item, dict)
+                ]
+                if "water-quality-indication" in codes:
+                    return c.get("valueString")
+            return None
+        except Exception:
+            return None
+

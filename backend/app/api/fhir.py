@@ -11,11 +11,13 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_session
 from app.middleware.auth import require_role
 from app.middleware.errors import NotFoundError
 from app.models.fhir_resource import FHIRResource
+from app.models.observation import Observation
 from app.models.user import User
 from app.schemas.fhir import FHIRResourceResponse
 from app.services.fhir_service import generate_fhir_bundle, post_to_fhir_sandbox
@@ -36,13 +38,22 @@ async def list_fhir_resources(
     user: User = Depends(require_role("researcher")),
     session: AsyncSession = Depends(get_session),
 ):
-    """List generated FHIR R4 resources with pagination."""
-    count_query = select(func.count(FHIRResource.id))
+    """List generated FHIR R4 resources with pagination and full observation details."""
+    count_query = (
+        select(func.count(FHIRResource.id))
+        .join(Observation, FHIRResource.observation_id == Observation.id)
+        .where(Observation.deleted_by_researcher.is_(False))
+    )
     total = (await session.execute(count_query)).scalar() or 0
 
     offset = (page - 1) * limit
     query = (
         select(FHIRResource)
+        .join(Observation, FHIRResource.observation_id == Observation.id)
+        .where(Observation.deleted_by_researcher.is_(False))
+        .options(
+            selectinload(FHIRResource.observation).selectinload(Observation.user)
+        )
         .order_by(FHIRResource.created_at.desc())
         .offset(offset)
         .limit(limit)
@@ -54,6 +65,7 @@ async def list_fhir_resources(
         "total": total,
         "page": page,
     }
+
 
 
 @router.get("/resources/{resource_id}")
