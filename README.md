@@ -772,7 +772,8 @@ The `docs/` directory contains 11 specification documents written before impleme
 
 ### OneAquaHealth IEEE Global Hackathon 2026
 
-**Track 3: Agentic AI for Health Intelligence**
+- **Primary Track:** **Track 3 -- AI-Supported Assessment** (Agentic AI for Health Intelligence)
+- **Cross-Cutting Track:** **Track 7 -- Digital Health Standards** (HL7 FHIR R4 Interoperability)
 
 The OneAquaHealth project is an EU-funded consortium studying the relationship between urban freshwater ecosystems and public health across five European pilot cities. The hackathon challenges teams to build tools that connect citizen science data to health information systems using AI and the FHIR health data standard.
 
