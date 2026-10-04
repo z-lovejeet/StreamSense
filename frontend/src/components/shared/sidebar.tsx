@@ -8,6 +8,7 @@ import {
   ClipboardList,
   MapPin,
   Waves,
+  HeartPulse,
 } from "lucide-react"
 
 const navItems = [
@@ -15,6 +16,7 @@ const navItems = [
   { href: "/volunteer/submit", label: "Submit", icon: Camera },
   { href: "/volunteer/history", label: "History", icon: ClipboardList },
   { href: "/volunteer/map", label: "Map", icon: MapPin },
+  { href: "/volunteer/health", label: "Health & Tips", icon: HeartPulse },
 ]
 
 /**
