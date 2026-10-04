@@ -11,14 +11,6 @@ import {
   Activity,
 } from "lucide-react"
 
-const PILOT_CITIES = [
-  { name: "Coimbra", code: "PT" },
-  { name: "Toulouse", code: "FR" },
-  { name: "Benevento", code: "IT" },
-  { name: "Ghent", code: "BE" },
-  { name: "Oslo", code: "NO" },
-]
-
 const STEPS = [
   {
     icon: Camera,
@@ -114,23 +106,6 @@ export default function HomePage() {
             >
               I&apos;m a Researcher
             </Link>
-          </div>
-
-          {/* Active EU Pilot Watersheds */}
-          <div className="mt-10 inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-stone-200/80 bg-white/80 px-4 py-1.5 text-xs text-stone-600 shadow-cozy-sm backdrop-blur-sm sm:gap-2.5 sm:px-5">
-            <span className="flex items-center gap-1.5 font-semibold text-stone-800">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
-              Active Pilots:
-            </span>
-            {PILOT_CITIES.map((city, idx) => (
-              <span key={city.name} className="inline-flex items-center gap-1 text-stone-700 font-medium">
-                {idx > 0 && <span className="text-stone-300 mr-1 select-none">·</span>}
-                {city.name} <span className="text-[10px] text-stone-400 font-mono">{city.code}</span>
-              </span>
-            ))}
           </div>
         </div>
       </section>
