@@ -3,12 +3,16 @@
 **AI-powered smart triage for citizen science stream monitoring.**
 Built for the OneAquaHealth IEEE Global Hackathon 2026 -- Track 3: Agentic AI.
 
+- **Live Application:** [https://stream-sense-eight.vercel.app](https://stream-sense-eight.vercel.app)
+- **API Documentation (Swagger UI):** [https://streamsense-u9oc.onrender.com/docs](https://streamsense-u9oc.onrender.com/docs)
+
 StreamSense sits between raw citizen stream observations and trusted research data. When a volunteer photographs an urban stream and describes what they see, a 7-agent AI pipeline identifies macroinvertebrate bioindicators, validates geospatial and temporal metadata, scores observation quality, and routes the result: high-confidence observations are auto-validated and translated into HL7 FHIR R4 health records; low-confidence observations are sent to a researcher review queue with AI-generated expert briefs. The volunteer receives an instant impact receipt explaining how their data contributes to One Health outcomes.
 
 ---
 
 ## Table of Contents
 
+- [Live Deployment](#live-deployment)
 - [Problem](#problem)
 - [How It Works](#how-it-works)
 - [AI Triage Pipeline](#ai-triage-pipeline)
@@ -26,6 +30,16 @@ StreamSense sits between raw citizen stream observations and trusted research da
 - [Documentation](#documentation)
 - [Hackathon Context](#hackathon-context)
 - [License](#license)
+
+---
+
+## Live Deployment
+
+| Service | Environment | URL |
+|---------|-------------|-----|
+| **Frontend Web App (Volunteer & Researcher)** | Production (Vercel) | [https://stream-sense-eight.vercel.app](https://stream-sense-eight.vercel.app) |
+| **Backend REST API (FastAPI & Swagger Docs)** | Production (Render) | [https://streamsense-u9oc.onrender.com/docs](https://streamsense-u9oc.onrender.com/docs) |
+| **Interactive Health Check** | Production (Render) | [https://streamsense-u9oc.onrender.com/health](https://streamsense-u9oc.onrender.com/health) |
 
 ---
 

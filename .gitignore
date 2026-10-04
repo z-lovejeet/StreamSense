@@ -58,3 +58,6 @@ yarn-error.log*
 
 # -- Internal research notes --
 research/
+
+# -- Submission artifacts --
+submission_artifacts/
