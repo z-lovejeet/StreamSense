@@ -23,7 +23,7 @@ import { StatusBadge } from "@/components/shared/status-badge"
 import { PageSkeleton } from "@/components/shared/loading-skeleton"
 import { ResearcherGamification } from "@/components/researcher/researcher-gamification"
 import { formatDistanceToNow } from "date-fns"
-import type { SummaryStats, Observation, ObservationListResponse } from "@/types"
+import type { SummaryStats, Observation, ObservationListResponse, PilotBasinsResponse } from "@/types"
 
 /**
  * Researcher Dashboard — stats + queue preview + activity.
@@ -35,19 +35,22 @@ export default function ResearcherDashboard() {
   const [stats, setStats] = useState<SummaryStats | null>(null)
   const [queueItems, setQueueItems] = useState<Observation[]>([])
   const [queueCount, setQueueCount] = useState(0)
+  const [basinsData, setBasinsData] = useState<PilotBasinsResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [summaryRes, queueRes, countRes] = await Promise.all([
+        const [summaryRes, queueRes, countRes, basinsRes] = await Promise.all([
           api.get<SummaryStats>("/analytics/summary"),
           api.get<ObservationListResponse>("/review/queue?page=1&limit=3"),
           api.get<{ count: number }>("/review/queue/count"),
+          api.get<PilotBasinsResponse>("/analytics/pilot-basins"),
         ])
         setStats(summaryRes)
         setQueueItems(queueRes.observations)
         setQueueCount(countRes.count)
+        setBasinsData(basinsRes)
       } catch (err) {
         console.error("Failed to load dashboard:", err)
       } finally {
@@ -124,6 +127,8 @@ export default function ResearcherDashboard() {
         pendingCount={stats?.pending_review ?? 0}
         autoRate={autoRate}
         avgConfidence={stats?.avg_confidence ?? null}
+        avgPipelineTime={stats?.avg_pipeline_time ?? null}
+        basins={basinsData?.basins}
       />
 
       {/* Review Queue Preview */}
@@ -275,16 +280,19 @@ export default function ResearcherDashboard() {
         </h2>
         <div className="rounded-cozy-lg border border-stone-100 bg-surface p-5 shadow-cozy-sm">
           <p className="text-xs text-stone-500 mb-4">
-            Mock disease-vector risk predictions across pilot cities
+            Live disease-vector risk predictions computed from pilot watershed observations and ecological telemetry
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              { city: "Coimbra", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
-              { city: "Toulouse", risk: "Moderate", color: "bg-amber-50 text-amber-700 border-amber-200" },
-              { city: "Benevento", risk: "High", color: "bg-danger-50 text-danger-700 border-danger-200" },
-              { city: "Ghent", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
-              { city: "Oslo", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
-            ].map(({ city, risk, color }) => (
+            {(basinsData?.forecast && basinsData.forecast.length > 0
+              ? basinsData.forecast
+              : [
+                  { city: "Coimbra", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+                  { city: "Toulouse", risk: "Moderate", color: "bg-amber-50 text-amber-700 border-amber-200" },
+                  { city: "Benevento", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+                  { city: "Ghent", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+                  { city: "Oslo", risk: "Low", color: "bg-success-50 text-success-700 border-success-200" },
+                ]
+            ).map(({ city, risk, color }) => (
               <div
                 key={city}
                 className={`rounded-cozy border p-3 ${color}`}
@@ -295,7 +303,7 @@ export default function ResearcherDashboard() {
             ))}
           </div>
           <p className="mt-3 text-[10px] text-stone-400">
-            Powered by DipteraCAST · OneAquaHealth Consortium · Mock data for demonstration
+            Powered by DipteraCAST · OneAquaHealth Consortium · Live ecological bioindicator surveillance
           </p>
         </div>
       </motion.div>

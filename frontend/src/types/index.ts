@@ -262,3 +262,31 @@ export interface VolunteerStats {
   descriptive_observations: number
   mean_bmwp: number
 }
+
+// ── Pilot Basins & Vector Forecast (Researcher Dashboard) ──
+
+export interface PilotBasinStatus {
+  city: string
+  country: string
+  basin: string
+  status: string
+  bmwpScore: number
+  dominantTaxon: string
+  vectorRisk: string
+  statusStyle: string
+  dotStyle: string
+  urgent: boolean
+  pendingId?: string | null
+  observationCount: number
+}
+
+export interface VectorForecast {
+  city: string
+  risk: string
+  color: string
+}
+
+export interface PilotBasinsResponse {
+  basins: PilotBasinStatus[]
+  forecast: VectorForecast[]
+}

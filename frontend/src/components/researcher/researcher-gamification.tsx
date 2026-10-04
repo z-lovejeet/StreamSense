@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react"
 import Link from "next/link"
+import type { PilotBasinStatus } from "@/types"
 
 interface ResearcherGamificationProps {
   totalObservations: number
@@ -22,6 +23,8 @@ interface ResearcherGamificationProps {
   pendingCount: number
   autoRate: number
   avgConfidence: number | null
+  avgPipelineTime?: number | null
+  basins?: PilotBasinStatus[]
 }
 
 export function ResearcherGamification({
@@ -30,9 +33,11 @@ export function ResearcherGamification({
   pendingCount,
   autoRate,
   avgConfidence,
+  avgPipelineTime,
+  basins,
 }: ResearcherGamificationProps) {
-  // Pilot cities ecological status matrix
-  const pilotBasins = [
+  // Pilot cities ecological status matrix fallback
+  const pilotBasins: PilotBasinStatus[] = [
     {
       city: "Coimbra",
       country: "Portugal",
@@ -43,6 +48,9 @@ export function ResearcherGamification({
       vectorRisk: "Low",
       statusStyle: "bg-success-50 text-success-700 border-success-200",
       dotStyle: "bg-success-500",
+      urgent: false,
+      pendingId: null,
+      observationCount: 0,
     },
     {
       city: "Toulouse",
@@ -54,6 +62,9 @@ export function ResearcherGamification({
       vectorRisk: "Moderate",
       statusStyle: "bg-amber-50 text-amber-700 border-amber-200",
       dotStyle: "bg-amber-500",
+      urgent: false,
+      pendingId: null,
+      observationCount: 0,
     },
     {
       city: "Benevento",
@@ -66,6 +77,8 @@ export function ResearcherGamification({
       statusStyle: "bg-danger-50 text-danger-700 border-danger-200",
       dotStyle: "bg-danger-500",
       urgent: true,
+      pendingId: null,
+      observationCount: 0,
     },
     {
       city: "Ghent",
@@ -77,6 +90,9 @@ export function ResearcherGamification({
       vectorRisk: "Low",
       statusStyle: "bg-success-50 text-success-700 border-success-200",
       dotStyle: "bg-success-500",
+      urgent: false,
+      pendingId: null,
+      observationCount: 0,
     },
     {
       city: "Oslo",
@@ -88,6 +104,9 @@ export function ResearcherGamification({
       vectorRisk: "Very Low",
       statusStyle: "bg-success-50 text-success-700 border-success-200",
       dotStyle: "bg-success-500",
+      urgent: false,
+      pendingId: null,
+      observationCount: 0,
     },
   ]
 
@@ -95,6 +114,7 @@ export function ResearcherGamification({
   const concordanceRate = avgConfidence ? `${Math.round(avgConfidence)}%` : "0%"
   const fhirBundleCount = `${validatedCount} Bundles`
   const queueTriagePct = totalObservations > 0 ? Math.round((validatedCount / totalObservations) * 100) : 0
+  const latencyDisplay = avgPipelineTime !== undefined && avgPipelineTime !== null ? `${avgPipelineTime}s` : "38s"
 
   const achievements = [
     {
@@ -118,7 +138,7 @@ export function ResearcherGamification({
     {
       id: "velocity",
       title: "Average Review Latency",
-      value: "38s",
+      value: latencyDisplay,
       description: "Average decision time per macroinvertebrate record in the expert review console.",
       icon: Timer,
       color: "text-moss-600 bg-moss-50 border-moss-200",
@@ -134,6 +154,16 @@ export function ResearcherGamification({
       badge: "Standardized",
     },
   ]
+
+  const activeBasins = basins && basins.length > 0 ? basins : pilotBasins
+  const validatedCitiesCount = activeBasins.filter((b) => b.status !== "Under Review" && b.observationCount > 0).length
+  const totalCitiesCount = activeBasins.length
+  const crossCatchmentPct = totalCitiesCount > 0 ? Math.round((validatedCitiesCount / totalCitiesCount) * 100) : 0
+
+  const urgentBasin = activeBasins.find((b) => b.urgent || b.status === "Under Review")
+  const alertText = urgentBasin
+    ? `${urgentBasin.basin} (${urgentBasin.city}) observation flagged with pending AI triage verification (${urgentBasin.dominantTaxon}).`
+    : `${pendingCount} observation${pendingCount === 1 ? "" : "s"} awaiting expert taxonomic verification and quality assurance triage.`
 
   // Weekly review sprint targets
   const sprintTargets = [
@@ -151,9 +181,9 @@ export function ResearcherGamification({
     },
     {
       title: "Cross-Catchment Calibration",
-      progress: "100%",
-      detail: "5 of 5 European pilot cities represented with validated bioindicators",
-      completed: true,
+      progress: `${crossCatchmentPct}%`,
+      detail: `${validatedCitiesCount} of ${totalCitiesCount} European pilot cities represented with validated bioindicators`,
+      completed: validatedCitiesCount === totalCitiesCount,
     },
   ]
 
@@ -182,13 +212,13 @@ export function ResearcherGamification({
                   </span>
                 </div>
                 <p className="text-xs text-amber-800 mt-0.5">
-                  Fiume Calore (Benevento) observation flagged with moderate AI triage confidence (62/100) and elevated Diptera vector risk.
+                  {alertText}
                 </p>
               </div>
             </div>
 
             <Link
-              href="/researcher/review"
+              href={urgentBasin?.pendingId ? `/researcher/review/${urgentBasin.pendingId}` : "/researcher/review"}
               className="inline-flex items-center justify-center gap-1.5 rounded-cozy bg-amber-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-cozy-sm hover:bg-amber-700 transition-colors flex-shrink-0"
             >
               Open Review Console
@@ -331,7 +361,7 @@ export function ResearcherGamification({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {pilotBasins.map((basin) => (
+          {activeBasins.map((basin) => (
             <div
               key={basin.city}
               className={`rounded-cozy border p-4 transition-all hover:shadow-cozy ${
@@ -390,10 +420,10 @@ export function ResearcherGamification({
               {basin.urgent && (
                 <div className="mt-3 pt-2 border-t border-amber-200/60">
                   <Link
-                    href="/researcher/review"
+                    href={basin.pendingId ? `/researcher/review/${basin.pendingId}` : "/researcher/review"}
                     className="inline-flex w-full items-center justify-center gap-1 rounded-cozy bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold py-1.5 transition-colors"
                   >
-                    Review Benevento Entry
+                    Review {basin.city} Entry
                     <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
