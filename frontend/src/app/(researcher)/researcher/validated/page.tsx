@@ -112,8 +112,8 @@ export default function ValidatedDataPage() {
       toast.success("Observation removed from researcher panel.")
       setDeleteTargetId(null)
       await loadData()
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to remove observation.")
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove observation.")
     } finally {
       setDeleting(false)
     }

@@ -31,8 +31,8 @@ export default function ResearcherObservationPage() {
       )
       setDetail(data)
       setError(null)
-    } catch (err: any) {
-      setError(err?.message || "Failed to load observation details.")
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load observation details.")
     } finally {
       setLoading(false)
     }
