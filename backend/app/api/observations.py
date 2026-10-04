@@ -56,6 +56,7 @@ async def create_observation(
 @router.get("", response_model=ObservationListResponse)
 async def list_observations(
     status: str | None = Query(None, description="Filter by observation status"),
+    scope: str | None = Query(None, description="Scope: 'volunteer' (own submissions) or 'researcher' (all)"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
     user: User = Depends(get_current_user),
@@ -67,7 +68,7 @@ async def list_observations(
     **Researchers** see all submissions across the platform.
     """
     observations, total = await observation_service.list_observations(
-        session, user=user, status=status, page=page, limit=limit
+        session, user=user, status=status, scope=scope, page=page, limit=limit
     )
     return ObservationListResponse(
         observations=[ObservationResponse.model_validate(o) for o in observations],
@@ -79,6 +80,7 @@ async def list_observations(
 @router.get("/{observation_id}", response_model=ObservationDetailResponse)
 async def get_observation(
     observation_id: uuid.UUID,
+    scope: str | None = Query(None, description="'volunteer' or 'researcher'"),
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -88,10 +90,11 @@ async def get_observation(
         raise NotFoundError("Observation not found")
 
     # Scoped deletion check
-    if user.role == UserRole.VOLUNTEER:
-        if obs.user_id != user.id or obs.deleted_by_volunteer:
+    acting_role = scope or (user.role.value if user else "volunteer")
+    if acting_role == "volunteer":
+        if (obs.user_id != user.id and user.role == UserRole.VOLUNTEER) or obs.deleted_by_volunteer:
             raise NotFoundError("Observation not found")
-    elif user.role == UserRole.RESEARCHER:
+    elif acting_role == "researcher":
         if obs.deleted_by_researcher:
             raise NotFoundError("Observation not found")
 
@@ -108,6 +111,7 @@ async def get_observation(
 @router.delete("/{observation_id}", status_code=204)
 async def delete_observation(
     observation_id: uuid.UUID,
+    scope: str | None = Query(None, description="'volunteer' or 'researcher'"),
     user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
@@ -117,7 +121,9 @@ async def delete_observation(
     - Volunteer deleting validated observation: removes from volunteer view, stays on researcher panel.
     - Researcher deleting observation: removes from researcher panel, preserves volunteer view.
     """
-    await observation_service.delete_observation(observation_id, user, session)
+    await observation_service.delete_observation(
+        observation_id, user, session, scope=scope
+    )
 
 
 @router.get("/{observation_id}/status", response_model=ObservationStatusResponse)

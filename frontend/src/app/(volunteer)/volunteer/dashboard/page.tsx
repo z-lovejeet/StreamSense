@@ -9,29 +9,32 @@ import { api } from "@/lib/api"
 import { ObservationCard } from "@/components/shared/observation-card"
 import { PageSkeleton } from "@/components/shared/loading-skeleton"
 import { VolunteerGamification } from "@/components/volunteer/volunteer-gamification"
-import type { Observation, ObservationListResponse } from "@/types"
+import type { Observation, ObservationListResponse, VolunteerStats } from "@/types"
 
 /**
  * Volunteer Dashboard — welcome + stats + recent observations + CTA.
  *
- * DOC-09 Lines 330–369
+ * DOC-09 Lines 330-369
  */
 export default function VolunteerDashboard() {
   const { user } = useAuth()
   const [observations, setObservations] = useState<Observation[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [volunteerStats, setVolunteerStats] = useState<VolunteerStats | null>(null)
 
   useEffect(() => {
     async function load() {
       try {
-        const data = await api.get<ObservationListResponse>(
-          "/observations?page=1&limit=5",
-        )
-        setObservations(data.observations)
-        setTotal(data.total)
+        const [obsData, statsData] = await Promise.all([
+          api.get<ObservationListResponse>("/observations?scope=volunteer&page=1&limit=5"),
+          api.get<VolunteerStats>("/observations/stats"),
+        ])
+        setObservations(obsData.observations)
+        setTotal(obsData.total)
+        setVolunteerStats(statsData)
       } catch (err) {
-        console.error("Failed to load observations:", err)
+        console.error("Failed to load dashboard:", err)
       } finally {
         setLoading(false)
       }
@@ -41,18 +44,14 @@ export default function VolunteerDashboard() {
 
   if (loading) return <PageSkeleton />
 
-  // Compute stats from user's observations
-  const validated = observations.filter(
-    (o) => o.status === "auto_validated" || o.status === "expert_validated",
-  ).length
-  const pending = observations.filter(
-    (o) => o.status === "pending_review" || o.status === "processing",
-  ).length
+  // Compute display stats from the real stats endpoint
+  const validated = volunteerStats?.validated_count ?? 0
+  const pending = volunteerStats?.pending_count ?? 0
   const autoRate =
-    total > 0
+    volunteerStats && volunteerStats.total_observations > 0
       ? Math.round(
-          (observations.filter((o) => o.status === "auto_validated").length /
-            Math.max(observations.length, 1)) *
+          (volunteerStats.auto_validated_count /
+            volunteerStats.total_observations) *
             100,
         )
       : 0
@@ -111,7 +110,7 @@ export default function VolunteerDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Total"
-            value={total}
+            value={volunteerStats?.total_observations ?? total}
             icon={<BarChart3 className="h-4 w-4 text-stream-500" />}
           />
           <StatCard
@@ -135,10 +134,9 @@ export default function VolunteerDashboard() {
       </motion.div>
 
       {/* Gamification, Badges & Field Challenges */}
-      <VolunteerGamification
-        totalObservations={total}
-        validatedObservations={validated}
-      />
+      {volunteerStats && (
+        <VolunteerGamification stats={volunteerStats} />
+      )}
 
       {/* Recent Observations */}
       <motion.div

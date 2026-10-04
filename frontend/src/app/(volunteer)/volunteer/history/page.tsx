@@ -26,7 +26,7 @@ export default function HistoryPage() {
       setLoading(true)
       try {
         const data = await api.get<ObservationListResponse>(
-          `/observations?page=${page}&limit=${limit}`,
+          `/observations?scope=volunteer&page=${page}&limit=${limit}`,
         )
         setObservations(data.observations)
         setTotal(data.total)

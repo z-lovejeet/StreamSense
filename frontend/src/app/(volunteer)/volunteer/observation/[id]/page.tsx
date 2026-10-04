@@ -28,7 +28,7 @@ export default function ObservationDetailPage() {
   const loadDetail = useCallback(async () => {
     try {
       const data = await api.get<ObservationDetail>(
-        `/observations/${observationId}`,
+        `/observations/${observationId}?scope=volunteer`,
       )
       setDetail(data)
       setError(null)

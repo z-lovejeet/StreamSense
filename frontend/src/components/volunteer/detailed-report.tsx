@@ -75,7 +75,7 @@ export function DetailedReport({ detail, onDelete }: DetailedReportProps) {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await api.delete(`/observations/${obs.id}`)
+      await api.delete(`/observations/${obs.id}?scope=volunteer`)
       toast.success(
         isValidated
           ? "Observation removed from your personal history."

@@ -101,19 +101,21 @@ async def list_observations(
     *,
     user: User | None = None,
     status: str | None = None,
+    scope: str | None = None,
     page: int = 1,
     limit: int = 20,
 ) -> tuple[list[Observation], int]:
     """List observations with pagination and optional filters.
 
-    If ``user`` is provided and their role is volunteer, only their own
-    observations are returned.
+    If ``scope`` is 'volunteer' or ``user`` is volunteer, only their own
+    observations (not deleted by volunteer) are returned.
     """
     query = select(Observation).options(selectinload(Observation.user))
     count_query = select(func.count(Observation.id))
 
-    # Role-based filtering with soft-delete exclusion
-    if user and user.role.value == "volunteer":
+    # Role/scope-based filtering with soft-delete exclusion
+    acting_role = scope or (user.role.value if user else "volunteer")
+    if acting_role == "volunteer":
         query = query.where(
             Observation.user_id == user.id,
             Observation.deleted_by_volunteer == False,
@@ -122,7 +124,7 @@ async def list_observations(
             Observation.user_id == user.id,
             Observation.deleted_by_volunteer == False,
         )
-    elif user and user.role.value == "researcher":
+    elif acting_role == "researcher":
         query = query.where(Observation.deleted_by_researcher == False)
         count_query = count_query.where(Observation.deleted_by_researcher == False)
 
@@ -191,6 +193,8 @@ async def delete_observation(
     observation_id: uuid.UUID,
     user: User,
     session: AsyncSession,
+    *,
+    scope: str | None = None,
 ) -> bool:
     """Delete an observation adhering to scoped volunteer/researcher rules.
 
@@ -213,14 +217,15 @@ async def delete_observation(
         ObservationStatus.EXPERT_VALIDATED,
     )
 
-    if user.role.value == "volunteer":
+    acting_role = scope or (user.role.value if user else "volunteer")
+    if acting_role == "volunteer":
         if observation.user_id != user.id:
             raise ForbiddenError("You cannot delete another volunteer's observation")
         observation.deleted_by_volunteer = True
         if not is_validated:
             # Unvalidated observations are also removed from researcher queue
             observation.deleted_by_researcher = True
-    elif user.role.value == "researcher":
+    elif acting_role == "researcher":
         # Researcher deletion only removes from researcher panel
         observation.deleted_by_researcher = True
     else:
