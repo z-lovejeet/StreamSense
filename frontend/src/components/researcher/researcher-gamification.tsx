@@ -92,9 +92,9 @@ export function ResearcherGamification({
   ]
 
   // Scientific achievements & validation targets
-  const concordanceRate = avgConfidence ? `${Math.round(avgConfidence)}%` : "94.8%"
-  const fhirBundleCount = validatedCount > 0 ? `${validatedCount * 3 + 6} Bundles` : "18 Bundles"
-  const queueTriagePct = totalObservations > 0 ? Math.round((validatedCount / totalObservations) * 100) : 80
+  const concordanceRate = avgConfidence ? `${Math.round(avgConfidence)}%` : "0%"
+  const fhirBundleCount = `${validatedCount} Bundles`
+  const queueTriagePct = totalObservations > 0 ? Math.round((validatedCount / totalObservations) * 100) : 0
 
   const achievements = [
     {
@@ -182,7 +182,7 @@ export function ResearcherGamification({
                   </span>
                 </div>
                 <p className="text-xs text-amber-800 mt-0.5">
-                  Fiume Calore (Benevento) observation flagged with moderate BioCLIP confidence (62/100) and elevated Diptera vector risk.
+                  Fiume Calore (Benevento) observation flagged with moderate AI triage confidence (62/100) and elevated Diptera vector risk.
                 </p>
               </div>
             </div>
@@ -270,7 +270,7 @@ export function ResearcherGamification({
               Weekly Quality Assurance Sprint
             </h4>
             <span className="text-xs font-mono font-medium text-stone-600">
-              88% Completed
+              {queueTriagePct}% Completed
             </span>
           </div>
 

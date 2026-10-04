@@ -17,10 +17,10 @@ import {
   Leaf,
 } from "lucide-react"
 import Link from "next/link"
+import type { VolunteerStats } from "@/types"
 
 interface VolunteerGamificationProps {
-  totalObservations: number
-  validatedObservations: number
+  stats: VolunteerStats
 }
 
 interface Badge {
@@ -35,17 +35,69 @@ interface Badge {
   accentColor: string
 }
 
-export function VolunteerGamification({
-  totalObservations,
-  validatedObservations,
-}: VolunteerGamificationProps) {
-  // Compute dynamic XP and rank based on observations
-  const currentXP = 240 + totalObservations * 65 + validatedObservations * 40
-  const nextLevelXP = 600
-  const xpPercent = Math.min(Math.round((currentXP / nextLevelXP) * 100), 100)
-  const currentRank = totalObservations >= 5 ? "Stream Guardian" : totalObservations >= 2 ? "River Sentinel" : "Bioindicator Scout"
-  const currentLevel = totalObservations >= 5 ? 3 : totalObservations >= 2 ? 2 : 1
+const TAXA_COMMON_NAMES: Record<string, string> = {
+  Ephemeroptera: "Mayfly nymph",
+  Plecoptera: "Stonefly nymph",
+  Trichoptera: "Caddisfly larva",
+  Chironomidae: "Midge larva",
+  Culicidae: "Mosquito larva",
+  Simuliidae: "Blackfly larva",
+  Gammaridae: "Freshwater shrimp",
+  Asellidae: "Water louse",
+  Gastropoda: "Freshwater snail",
+  Oligochaeta: "Aquatic worm",
+  Baetidae: "Small mayfly nymph",
+  Hydropsychidae: "Net-spinning caddisfly",
+  Heptageniidae: "Flat-headed mayfly",
+  Leuctridae: "Rolled-wing stonefly",
+  Tubificidae: "Sludge worm",
+}
 
+export function VolunteerGamification({ stats }: VolunteerGamificationProps) {
+  const {
+    total_observations,
+    validated_count,
+    unique_species,
+    ept_taxa_found,
+    unique_cities,
+    high_confidence_validated,
+    seasons_observed,
+    fhir_count,
+    descriptive_observations,
+    mean_bmwp,
+  } = stats
+
+  // Dynamic XP: 50 per submission + 75 per validated + 100 per EPT taxon + 30 per description
+  const currentXP =
+    total_observations * 50 +
+    validated_count * 75 +
+    ept_taxa_found.length * 100 +
+    descriptive_observations * 30
+
+  // Leveling thresholds
+  const levels = [
+    { min: 0, rank: "Bioindicator Scout", next: "River Sentinel" },
+    { min: 300, rank: "River Sentinel", next: "Stream Guardian" },
+    { min: 800, rank: "Stream Guardian", next: "Master Bioindicator" },
+    { min: 1500, rank: "Master Bioindicator", next: "Aquatic Ecologist" },
+    { min: 3000, rank: "Aquatic Ecologist", next: "OneHealth Champion" },
+  ]
+  let currentLevel = 1
+  let currentRank = levels[0].rank
+  let nextRank = levels[0].next
+  let nextLevelXP = levels[1]?.min || 300
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (currentXP >= levels[i].min) {
+      currentLevel = i + 1
+      currentRank = levels[i].rank
+      nextRank = levels[i].next
+      nextLevelXP = levels[i + 1]?.min || levels[i].min + 500
+      break
+    }
+  }
+  const xpPercent = Math.min(Math.round((currentXP / nextLevelXP) * 100), 100)
+
+  // Dynamic badges computed from real data
   const badges: Badge[] = [
     {
       id: "first_ripple",
@@ -53,8 +105,12 @@ export function VolunteerGamification({
       category: "Field Biomonitoring",
       description: "Submitted your first authenticated stream macroinvertebrate observation.",
       icon: Droplets,
-      status: "unlocked",
-      accentColor: "text-stream-600 bg-stream-50 border-stream-200",
+      status: total_observations >= 1 ? "unlocked" : "locked",
+      progressText: total_observations >= 1 ? undefined : "0 / 1 Observation",
+      progressPercent: total_observations >= 1 ? undefined : 0,
+      accentColor: total_observations >= 1
+        ? "text-stream-600 bg-stream-50 border-stream-200"
+        : "text-stone-400 bg-stone-50 border-stone-200",
     },
     {
       id: "ept_detective",
@@ -62,8 +118,12 @@ export function VolunteerGamification({
       category: "Bioindicator Mastery",
       description: "Identified sensitive Ephemeroptera, Plecoptera, or Trichoptera taxa.",
       icon: Sparkles,
-      status: "unlocked",
-      accentColor: "text-moss-600 bg-moss-50 border-moss-200",
+      status: ept_taxa_found.length > 0 ? "unlocked" : "locked",
+      progressText: ept_taxa_found.length > 0 ? undefined : "0 EPT taxa found",
+      progressPercent: ept_taxa_found.length > 0 ? undefined : 0,
+      accentColor: ept_taxa_found.length > 0
+        ? "text-moss-600 bg-moss-50 border-moss-200"
+        : "text-stone-400 bg-stone-50 border-stone-200",
     },
     {
       id: "basin_explorer",
@@ -71,17 +131,25 @@ export function VolunteerGamification({
       category: "Catchment Reach",
       description: "Mapped freshwater quality across 2 or more European pilot stream basins.",
       icon: Compass,
-      status: "unlocked",
-      accentColor: "text-amber-600 bg-amber-50 border-amber-200",
+      status: unique_cities.length >= 2 ? "unlocked" : unique_cities.length >= 1 ? "in_progress" : "locked",
+      progressText: unique_cities.length < 2 ? `${unique_cities.length} / 2 Basins` : undefined,
+      progressPercent: unique_cities.length < 2 ? Math.round((unique_cities.length / 2) * 100) : undefined,
+      accentColor: unique_cities.length >= 2
+        ? "text-amber-600 bg-amber-50 border-amber-200"
+        : "text-stone-600 bg-stone-100 border-stone-200",
     },
     {
       id: "health_sentinel",
       title: "One Health Sentinel",
       category: "Epidemiological Early-Warning",
-      description: "Recorded water clarity and flow speed data to calibrate DipteraCAST vector models.",
+      description: "Provided detailed environmental descriptions to calibrate DipteraCAST vector models.",
       icon: ShieldCheck,
-      status: "unlocked",
-      accentColor: "text-stream-600 bg-stream-50 border-stream-200",
+      status: descriptive_observations >= 3 ? "unlocked" : descriptive_observations >= 1 ? "in_progress" : "locked",
+      progressText: descriptive_observations < 3 ? `${descriptive_observations} / 3 Descriptions` : undefined,
+      progressPercent: descriptive_observations < 3 ? Math.round((descriptive_observations / 3) * 100) : undefined,
+      accentColor: descriptive_observations >= 3
+        ? "text-stream-600 bg-stream-50 border-stream-200"
+        : "text-stone-600 bg-stone-100 border-stone-200",
     },
     {
       id: "precision_scout",
@@ -89,10 +157,12 @@ export function VolunteerGamification({
       category: "Data Quality",
       description: "Achieved 85%+ AI triage confidence across 5 validated field observations.",
       icon: Target,
-      status: "in_progress",
-      progressText: "4 / 5 Observations",
-      progressPercent: 80,
-      accentColor: "text-stone-600 bg-stone-100 border-stone-200",
+      status: high_confidence_validated >= 5 ? "unlocked" : high_confidence_validated >= 1 ? "in_progress" : "locked",
+      progressText: high_confidence_validated < 5 ? `${high_confidence_validated} / 5 Observations` : undefined,
+      progressPercent: high_confidence_validated < 5 ? Math.round((high_confidence_validated / 5) * 100) : undefined,
+      accentColor: high_confidence_validated >= 5
+        ? "text-stream-600 bg-stream-50 border-stream-200"
+        : "text-stone-600 bg-stone-100 border-stone-200",
     },
     {
       id: "four_seasons",
@@ -100,42 +170,54 @@ export function VolunteerGamification({
       category: "Temporal Coverage",
       description: "Record ecological baseline observations across autumn, winter, spring, and summer.",
       icon: Trophy,
-      status: "locked",
-      progressText: "1 / 4 Seasons",
-      progressPercent: 25,
-      accentColor: "text-stone-400 bg-stone-50 border-stone-200",
+      status: seasons_observed.length >= 4 ? "unlocked" : seasons_observed.length >= 1 ? "in_progress" : "locked",
+      progressText: seasons_observed.length < 4 ? `${seasons_observed.length} / 4 Seasons` : undefined,
+      progressPercent: seasons_observed.length < 4 ? Math.round((seasons_observed.length / 4) * 100) : undefined,
+      accentColor: seasons_observed.length >= 4
+        ? "text-amber-600 bg-amber-50 border-amber-200"
+        : "text-stone-400 bg-stone-50 border-stone-200",
     },
   ]
 
-  const quests = [
+  const unlockedCount = badges.filter(b => b.status === "unlocked").length
+
+  // Dynamic missions based on actual data
+  const missions = [
     {
-      id: "quest_1",
-      title: "Akerselva & Calore Coldwater Run",
-      reward: "+75 XP",
-      difficulty: "Intermediate",
-      description: "Sample shaded riffles or fast-flowing gravel beds to calibrate BioCLIP mayfly models.",
-      progress: "2 / 2 Completed",
-      completed: true,
+      id: "mission_species",
+      title: "Species Diversity Survey",
+      reward: `+${(3 - Math.min(unique_species.length, 3)) * 75} XP`,
+      difficulty: unique_species.length >= 2 ? "Intermediate" : "Beginner",
+      description: "Identify 3 different macroinvertebrate taxa across your stream observations.",
+      progress: `${Math.min(unique_species.length, 3)} / 3 Species`,
+      completed: unique_species.length >= 3,
     },
     {
-      id: "quest_2",
-      title: "Water Clarity & Algae Bloom Assessment",
-      reward: "+45 XP",
-      difficulty: "Quick Survey",
-      description: "Log water transparency and algae presence in warm weather pool margins.",
-      progress: "1 / 1 Completed",
-      completed: true,
-    },
-    {
-      id: "quest_3",
-      title: "Multi-Basin Comparative Survey",
+      id: "mission_quality",
+      title: "High-Quality Submission Challenge",
       reward: "+100 XP",
+      difficulty: "Quick Survey",
+      description: "Submit an observation that achieves 80%+ AI confidence with a detailed environmental description.",
+      progress: `${Math.min(high_confidence_validated, 3)} / 3 High-Quality`,
+      completed: high_confidence_validated >= 3,
+    },
+    {
+      id: "mission_basin",
+      title: "Multi-Basin Comparative Survey",
+      reward: "+150 XP",
       difficulty: "Field Challenge",
-      description: "Contribute an observation from an urban pilot stream outside your primary catchment.",
-      progress: "1 / 2 Basins",
-      completed: false,
+      description: "Contribute observations from 2 different European pilot stream basins.",
+      progress: `${Math.min(unique_cities.length, 2)} / 2 Basins`,
+      completed: unique_cities.length >= 2,
     },
   ]
+
+  // Dynamic eco-impact stats
+  const bmwpLabel =
+    mean_bmwp >= 7 ? "Good Ecological Quality" :
+    mean_bmwp >= 4 ? "Moderate Ecological Quality" :
+    mean_bmwp >= 1 ? "Poor Ecological Quality" :
+    "No Data Available"
 
   return (
     <div className="space-y-6">
@@ -161,7 +243,7 @@ export function VolunteerGamification({
                 </span>
               </div>
               <h3 className="font-display text-lg text-stone-800 mt-0.5">
-                {currentRank} · {currentXP} XP
+                {currentRank} -- {currentXP} XP
               </h3>
             </div>
           </div>
@@ -169,7 +251,7 @@ export function VolunteerGamification({
           <div className="flex items-center gap-2 text-xs text-stone-500">
             <Flame className="h-4 w-4 text-amber-500" />
             <span>
-              Next Rank: <strong className="text-stone-700">Master Bioindicator</strong> at {nextLevelXP} XP
+              Next Rank: <strong className="text-stone-700">{nextRank}</strong> at {nextLevelXP} XP
             </span>
           </div>
         </div>
@@ -190,19 +272,19 @@ export function VolunteerGamification({
           </div>
         </div>
 
-        {/* Milestone perks */}
+        {/* XP Breakdown */}
         <div className="mt-4 pt-4 border-t border-stone-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-stone-500">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-3.5 w-3.5 text-success-600 flex-shrink-0" />
-            <span>+100 XP per BioCLIP Validated Taxon</span>
+            <span>+50 XP per Submission ({total_observations} earned)</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-3.5 w-3.5 text-success-600 flex-shrink-0" />
-            <span>+50 XP for Sensitive Bioindicators (EPT)</span>
+            <span>+75 XP per Validated ({validated_count} earned)</span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-3.5 w-3.5 text-success-600 flex-shrink-0" />
-            <span>+30 XP for Complete Hydro-Parameters</span>
+            <span>+100 XP per EPT Taxon ({ept_taxa_found.length} earned)</span>
           </div>
         </div>
       </motion.div>
@@ -225,7 +307,7 @@ export function VolunteerGamification({
             </p>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-pill bg-stone-100 text-stone-600">
-            4 Unlocked / 6 Total
+            {unlockedCount} Unlocked / {badges.length} Total
           </span>
         </div>
 
@@ -301,7 +383,7 @@ export function VolunteerGamification({
         </div>
       </motion.div>
 
-      {/* Biomonitoring Field Missions / Challenges */}
+      {/* Dynamic Field Missions */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -315,7 +397,7 @@ export function VolunteerGamification({
               Active Field Missions
             </h2>
             <p className="text-xs text-stone-500 mt-0.5">
-              Weekly biomonitoring objectives targeted to fill regional watershed sampling gaps
+              Biomonitoring objectives to improve your data quality and coverage
             </p>
           </div>
           <Link
@@ -328,20 +410,20 @@ export function VolunteerGamification({
         </div>
 
         <div className="space-y-3">
-          {quests.map((quest) => (
+          {missions.map((mission) => (
             <div
-              key={quest.id}
+              key={mission.id}
               className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-cozy border border-stone-100 bg-stone-50/60 hover:bg-stone-50 transition-colors"
             >
               <div className="flex items-start gap-3">
                 <div
                   className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-cozy text-xs font-bold ${
-                    quest.completed
+                    mission.completed
                       ? "bg-success-100 text-success-700"
                       : "bg-stream-100 text-stream-700"
                   }`}
                 >
-                  {quest.completed ? (
+                  {mission.completed ? (
                     <CheckCircle2 className="h-4 w-4" />
                   ) : (
                     <Clock className="h-4 w-4" />
@@ -350,26 +432,28 @@ export function VolunteerGamification({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-sm font-semibold text-stone-800">
-                      {quest.title}
+                      {mission.title}
                     </h4>
-                    <span className="rounded-pill bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
-                      {quest.reward}
-                    </span>
+                    {!mission.completed && (
+                      <span className="rounded-pill bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">
+                        {mission.reward}
+                      </span>
+                    )}
                     <span className="rounded-pill bg-stone-100 px-2 py-0.5 text-[10px] font-medium text-stone-500">
-                      {quest.difficulty}
+                      {mission.difficulty}
                     </span>
                   </div>
                   <p className="text-xs text-stone-500 mt-1">
-                    {quest.description}
+                    {mission.description}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0 pl-10 sm:pl-0">
                 <span className="text-xs font-mono font-medium text-stone-600">
-                  {quest.progress}
+                  {mission.progress}
                 </span>
-                {quest.completed ? (
+                {mission.completed ? (
                   <span className="rounded-cozy bg-success-50 px-2.5 py-1 text-xs font-medium text-success-700">
                     Done
                   </span>
@@ -388,7 +472,7 @@ export function VolunteerGamification({
         </div>
       </motion.div>
 
-      {/* Community Eco-Impact Summary Grid */}
+      {/* Dynamic Eco-Impact Summary */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -398,7 +482,7 @@ export function VolunteerGamification({
         <div className="mb-4">
           <h2 className="font-display text-lg text-stone-800 flex items-center gap-2">
             <Leaf className="h-4 w-4 text-moss-600" />
-            Ecological Protection Impact
+            Your Ecological Impact
           </h2>
           <p className="text-xs text-stone-500 mt-0.5">
             How your field submissions power OneAquaHealth water quality and disease early-warning systems
@@ -408,34 +492,48 @@ export function VolunteerGamification({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="rounded-cozy border border-stone-100 bg-stone-50/50 p-3.5">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-              Catchments Monitored
+              Basins Monitored
             </p>
-            <p className="text-xl font-bold text-stone-800 mt-1">4 Pilot Basins</p>
-            <p className="text-[11px] text-stone-400 mt-0.5">Mondego, Midi, Calore, Akerselva</p>
+            <p className="text-xl font-bold text-stone-800 mt-1">
+              {unique_cities.length} {unique_cities.length === 1 ? "Basin" : "Basins"}
+            </p>
+            <p className="text-[11px] text-stone-400 mt-0.5">
+              {unique_cities.length > 0 ? unique_cities.join(", ") : "Submit your first observation"}
+            </p>
           </div>
 
           <div className="rounded-cozy border border-stone-100 bg-stone-50/50 p-3.5">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
               Mean BMWP Health
             </p>
-            <p className="text-xl font-bold text-moss-700 mt-1">7.4 / 10</p>
-            <p className="text-[11px] text-stone-400 mt-0.5">Good Ecological Quality</p>
+            <p className={`text-xl font-bold mt-1 ${mean_bmwp >= 7 ? "text-moss-700" : mean_bmwp >= 4 ? "text-amber-700" : "text-stone-800"}`}>
+              {mean_bmwp > 0 ? `${mean_bmwp} / 10` : "--"}
+            </p>
+            <p className="text-[11px] text-stone-400 mt-0.5">{bmwpLabel}</p>
           </div>
 
           <div className="rounded-cozy border border-stone-100 bg-stone-50/50 p-3.5">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
               FHIR Records Generated
             </p>
-            <p className="text-xl font-bold text-stream-700 mt-1">4 Bundles</p>
+            <p className="text-xl font-bold text-stream-700 mt-1">
+              {fhir_count} {fhir_count === 1 ? "Bundle" : "Bundles"}
+            </p>
             <p className="text-[11px] text-stone-400 mt-0.5">Standardized HL7/FHIR R4</p>
           </div>
 
           <div className="rounded-cozy border border-stone-100 bg-stone-50/50 p-3.5">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-              Community Standing
+              Species Identified
             </p>
-            <p className="text-xl font-bold text-amber-700 mt-1">Top 10%</p>
-            <p className="text-[11px] text-stone-400 mt-0.5">Citizen Scientist Rank</p>
+            <p className="text-xl font-bold text-amber-700 mt-1">
+              {unique_species.length} {unique_species.length === 1 ? "Taxon" : "Taxa"}
+            </p>
+            <p className="text-[11px] text-stone-400 mt-0.5 truncate">
+              {unique_species.length > 0
+                ? unique_species.slice(0, 3).map(s => TAXA_COMMON_NAMES[s] || s).join(", ")
+                : "No species identified yet"}
+            </p>
           </div>
         </div>
       </motion.div>

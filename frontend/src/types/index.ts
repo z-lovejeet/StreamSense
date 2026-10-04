@@ -244,3 +244,21 @@ export interface GeoJSONFeatureCollection {
   type: "FeatureCollection"
   features: GeoJSONFeature[]
 }
+
+// -- Volunteer Stats (Gamification) --
+
+export interface VolunteerStats {
+  total_observations: number
+  validated_count: number
+  auto_validated_count: number
+  pending_count: number
+  unique_species: string[]
+  ept_taxa_found: string[]
+  unique_cities: string[]
+  avg_confidence: number | null
+  high_confidence_validated: number
+  seasons_observed: string[]
+  fhir_count: number
+  descriptive_observations: number
+  mean_bmwp: number
+}
