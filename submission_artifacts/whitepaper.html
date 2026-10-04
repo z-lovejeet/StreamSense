@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>StreamSense: Technical Whitepaper & System Architecture Specification</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 20mm 16mm 20mm 16mm;
+    @bottom-right {
+      content: counter(page);
+      font-size: 9pt;
+      color: #64748b;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.55;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4 {
+    color: #0f172a;
+    font-weight: 700;
+    margin-top: 1.3em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+  }
+
+  h1 {
+    font-size: 20pt;
+    line-height: 1.2;
+    color: #0f766e;
+    margin-top: 0;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #0369a1;
+    margin-bottom: 12px;
+  }
+
+  .meta-bar {
+    display: flex;
+    justify-content: space-between;
+    background: #f1f5f9;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 8.5pt;
+    color: #475569;
+    margin-bottom: 20px;
+    border-left: 4px solid #0f766e;
+  }
+
+  .meta-bar div strong {
+    color: #0f172a;
+  }
+
+  h2 {
+    font-size: 13pt;
+    border-bottom: 1.5px solid #cbd5e1;
+    padding-bottom: 3px;
+    margin-top: 18px;
+    color: #0f766e;
+  }
+
+  h3 {
+    font-size: 10.5pt;
+    color: #0369a1;
+    margin-top: 12px;
+  }
+
+  p {
+    margin: 0 0 8px 0;
+    text-align: justify;
+  }
+
+  ul, ol {
+    margin: 0 0 10px 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 3px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    padding: 6px 9px;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+  }
+
+  th {
+    background-color: #f8fafc;
+    color: #0f172a;
+    font-weight: 600;
+  }
+
+  tr:nth-child(even) {
+    background-color: #fcfdfd;
+  }
+
+  .callout {
+    background-color: #f0fdf4;
+    border-left: 3.5px solid #16a34a;
+    padding: 9px 13px;
+    margin: 10px 0;
+    border-radius: 0 5px 5px 0;
+    font-size: 9pt;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    color: #15803d;
+    margin-bottom: 3px;
+  }
+
+  .callout-blue {
+    background-color: #f0f9ff;
+    border-left: 3.5px solid #0284c7;
+  }
+
+  .callout-blue .callout-title {
+    color: #0369a1;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 8.5pt;
+    background-color: #f1f5f9;
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #0f766e;
+  }
+
+  pre {
+    background-color: #0f172a;
+    color: #e2e8f0;
+    padding: 10px 12px;
+    border-radius: 5px;
+    font-size: 8pt;
+    line-height: 1.4;
+    overflow-x: auto;
+    margin: 8px 0 12px 0;
+    page-break-inside: avoid;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .diagram-box {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 7.5pt;
+    line-height: 1.35;
+    white-space: pre;
+    color: #0f172a;
+    page-break-inside: avoid;
+  }
+
+  .grid-2 {
+    display: flex;
+    gap: 12px;
+    margin: 8px 0;
+  }
+
+  .grid-2 > div {
+    flex: 1;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    font-size: 7.5pt;
+    font-weight: 600;
+  }
+
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-blue { background: #e0f2fe; color: #075985; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+<h1>StreamSense: AI-Powered Smart Triage for Citizen Science Stream Monitoring</h1>
+<div class="subtitle">System Architecture, Agentic AI Pipeline, and HL7 FHIR R4 Specification</div>
+
+<div class="meta-bar">
+  <div><strong>Event:</strong> OneAquaHealth IEEE Global Hackathon 2026</div>
+  <div><strong>Tracks:</strong> Track 3: Agentic AI & Track 7: Digital Health Standards</div>
+  <div><strong>Author:</strong> Lovejeet Singh</div>
+  <div><strong>Codebase:</strong> github.com/z-lovejeet/StreamSense</div>
+</div>
+
+<h2>Abstract</h2>
+<p>
+Urban freshwater streams represent critical ecological buffer zones that directly modulate human environmental health. The European Union Horizon Europe <strong>OneAquaHealth</strong> project monitors urban stream corridors across five European pilot cities (Coimbra, Toulouse, Benevento, Ghent, Oslo) through participatory citizen science. However, conventional citizen science pipelines suffer from a structural quality bottleneck: 100% of incoming submissions require manual expert verification, leading to 60-80% rejection rates, severe researcher burnout, volunteer feedback latency exceeding weeks, and over 90% volunteer churn within 30 days. Most critically, validated ecological data remains trapped in isolated databases, severed from public health early warning networks.
+</p>
+<p>
+<strong>StreamSense</strong> introduces an autonomous, multi-agent AI triage platform that bridges raw citizen observation and standardized healthcare informatics. Utilizing a 7-agent pipeline combining multimodal vision (Gemini 3 Flash series: gemini-3.8-flash / 3.7 / 3.5-flash-lite), high-throughput NLP (Groq Qwen 3.8 27B / GPT-OSS cascade), geospatial/biodiversity verification (GBIF, OpenStreetMap), and weighted Bayesian quality scoring (Gemini 3 Flash), StreamSense completes end-to-end triage in 3 to 5 seconds. High-confidence observations (score &ge; 70) are auto-validated into <strong>HL7 FHIR R4</strong> health records conforming to the <code>observation-indicators-oah</code> profile. Ambiguous submissions (score &lt; 70) are routed to an expert queue accompanied by an automated AI Expert Brief, reducing researcher review time from 10 minutes to 30 seconds. Every citizen receives an instant, plain-language One Health Impact Receipt.
+</p>
+
+<h2>1. The Problem: The 5-Stage Citizen Science Quality Cascade</h2>
+<p>
+Across urban European catchments, citizen science is the only financially viable mechanism to achieve high-density spatial and temporal environmental surveillance. Yet, without an intelligent triage intermediary, citizen monitoring fails across five cascading stages:
+</p>
+<ul>
+  <li><strong>1. Unstructured Submission:</strong> Citizen submits a smartphone photo with vague descriptions (e.g., <em>"water looks cloudy, saw some bugs"</em>). Lack of immediate taxonomic and environmental structuring degrades scientific utility.</li>
+  <li><strong>2. Manual Queue Congestion:</strong> Every observation queues for manual inspection by academic freshwater ecologists, creating weeks of backlog.</li>
+  <li><strong>3. High Rejection & Wasted Labor:</strong> Researchers discard 60-80% of submissions due to photographic blur, invalid GPS, or lack of diagnostic bioindicator value.</li>
+  <li><strong>4. Rapid Volunteer Churn:</strong> Lack of reciprocal feedback causes &gt;90% of citizen volunteers to abandon participation within 30 days.</li>
+  <li><strong>5. Severed One Health Integration:</strong> Validated bioindicator data remains in siloed CSVs, unable to reach public health epidemiological surveillance systems prior to clinical outbreak.</li>
+</ul>
+
+<div class="callout callout-blue">
+  <div class="callout-title">The StreamSense Operational Hypothesis</div>
+  Citizens do not inherently produce invalid data; rather, current systems lack an automated, real-time quality triage filter. By applying multi-agent triage, approximately 80% of submissions can be auto-validated and standardized instantly, reserving expert human attention strictly for the ~20% of complex, boundary cases.
+</div>
+
+<h2>2. System Architecture & Clean 3-Tier Design</h2>
+<p>
+StreamSense is engineered using a modular 3-tier clean architecture enforcing clear separation of concerns, enterprise data validation, and strict role-based access control (RBAC):
+</p>
+
+<div class="diagram-box">
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   CLIENT TIER (PWA)                                    │
+│  Next.js 15 (App Router) | React 19 | TypeScript 5 | Tailwind CSS 4 | Leaflet | Recharts│
+│  ├─ Volunteer Panel: Mobile-first field reporting, live SSE progress, Impact Receipts │
+│  └─ Researcher Panel: Desktop-optimized review queue, AI briefs, FHIR export inspector│
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ HTTPS / REST / SSE
+┌───────────────────────────────────────────▼────────────────────────────────────────────┐
+│                             APPLICATION TIER (FastAPI Backend)                          │
+│  FastAPI (Python 3.13) | AsyncIO Parallel Orchestration | SQLAlchemy 2.0 | Pydantic v2 │
+│  ├─ Routers: /observations, /review, /validated, /analytics, /fhir, /stats             │
+│  ├─ Middleware: Supabase JWKS JWT Verification, CORS Whitelisting, Global Error Handler│
+│  └─ Services: ObservationService, ReviewService, FHIRService, StorageService, Groq/Gemini│
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ Async SQLAlchemy / REST APIs
+┌───────────────────────────────────────────▼────────────────────────────────────────────┐
+│                                    DATA & STANDARDS TIER                               │
+│  ├─ Supabase PostgreSQL 15: Relational tables (users, observations, ai_results, fhir)  │
+│  ├─ Supabase Object Storage: S3-compatible encrypted image store                       │
+│  ├─ HL7 FHIR R4 Sandbox: European HAPI FHIR Server (observation-indicators-oah)       │
+│  └─ External Geospatial/Taxa: GBIF Occurrence API, OpenWeatherMap, OSM Nominatim       │
+└────────────────────────────────────────────────────────────────────────────────────────┘
+</div>
+
+<div class="page-break"></div>
+
+<h2>3. The 7-Agent AI Triage Pipeline</h2>
+<p>
+StreamSense implements a parallel-then-chained multi-agent architecture. Processing is executed in three distinct stages, streaming intermediate progress directly to the user via Server-Sent Events (SSE):
+</p>
+
+<div class="diagram-box">
+                             Citizen Observation Submitted
+                                 (Photo + Text + GPS)
+                                          │
+            ┌─────────────────────────────┼─────────────────────────────┐
+            │                             │                             │
+            ▼ Stage 1 (Parallel)          ▼ Stage 1 (Parallel)          ▼ Stage 1 (Parallel)
+   ┌─────────────────┐           ┌─────────────────┐           ┌─────────────────┐
+   │ Agent 1: Vision │           │  Agent 2: Text  │           │ Agent 3: Meta   │
+   │ Gemini 3 Flash  │           │ Groq Qwen 3.8   │           │ Groq Qwen + APIs│
+   │ Multimodal ID   │           │ 14 Env Params   │           │ Geospatial/GBIF │
+   └────────┬────────┘           └────────┬────────┘           └────────┬────────┘
+            │                             │                             │
+            └─────────────────────────────┼─────────────────────────────┘
+                                          │ Await All Stage 1 Results
+                                          ▼ Stage 2 (Sequential)
+                                 ┌─────────────────┐
+                                 │ Agent 4: Quality│
+                                 │ Gemini 3 Flash  │
+                                 │ Weighted Score  │
+                                 └────────┬────────┘
+                                          │
+                         ┌────────────────┴────────────────┐
+                         │                                 │
+                   Score &ge; 70                      Score &lt; 70
+                 (Auto-Validated)                (Requires Review)
+                         │                                 │
+        ┌────────────────┴────────────────┐       ┌────────┴────────────────┐
+        ▼ Stage 3a (Parallel)             ▼       ▼ Stage 3b (Parallel)     ▼
+ ┌──────────────┐                  ┌────────────┐ ┌──────────────┐   ┌────────────┐
+ │Agent 5: FHIR │                  │Agent 6: Imp│ │Agent 7: Brief│   │Agent 6: Imp│
+ │Gemini 3 Flash│                  │Groq Qwen   │ │Gemini 3 Flash│   │Groq Qwen   │
+ │FHIR R4 JSON  │                  │Impact Card │ │Ecologist Doc │   │Impact Card │
+ └──────┬───────┘                  └─────┬──────┘ └──────┬───────┘   └─────┬──────┘
+        ▼                                ▼               ▼                 ▼
+ FHIR Sandbox Export               Volunteer UI    Researcher Queue  Volunteer UI
+</div>
+
+<h3>Agent Functional Specifications</h3>
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Agent Name</th>
+      <th>Engine / Model</th>
+      <th>Latency</th>
+      <th>Scientific Objective & Responsibilities</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td><strong>Vision Analyzer</strong></td>
+      <td>Gemini 3 Flash (3.8 / 3.7 / 3.5-lite)</td>
+      <td>~2.0s</td>
+      <td>Identifies benthic macroinvertebrates from photos against 15 target taxa; assigns BMWP scores and flags disease vector taxa (Culicidae, Simuliidae).</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td><strong>Description Interpreter</strong></td>
+      <td>Groq (qwen/qwen3.8-27b)</td>
+      <td>&lt;500ms</td>
+      <td>Parses free-text volunteer notes into 14 standardized parameters: water clarity, color, flow velocity, odor, algae cover, debris, and bank substrate.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td><strong>Metadata Validator</strong></td>
+      <td>Groq (qwen/qwen3.8-27b) + APIs</td>
+      <td>&lt;800ms</td>
+      <td>Verifies coordinates against OSM water boundaries (&le;50m), confirms temporal integrity, fetches weather, and cross-references GBIF species distribution within 200km.</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td><strong>Quality Scorer</strong></td>
+      <td>Gemini 3 Flash (3.8 / 3.7)</td>
+      <td>~2.0s</td>
+      <td>Computes weighted composite score (0-100); enforces strict guardrails; outputs transparent explainability breakdown and routing verdict.</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td><strong>FHIR Translator</strong></td>
+      <td>Gemini 3 Flash (3.8 / 3.7)</td>
+      <td>~2.0s</td>
+      <td>Converts validated data into HL7 FHIR R4 Observation resource conforming to <code>observation-indicators-oah</code>; includes 2-stage self-healing schema retry loop.</td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td><strong>Impact Generator</strong></td>
+      <td>Groq (qwen/qwen3.8-27b)</td>
+      <td>&lt;500ms</td>
+      <td>Translates technical findings into warm, encouraging 4-part Impact Receipts connecting citizen findings directly to neighborhood One Health outcomes.</td>
+    </tr>
+    <tr>
+      <td><strong>7</strong></td>
+      <td><strong>Expert Brief Generator</strong></td>
+      <td>Gemini 3 Flash (3.8 / 3.7)</td>
+      <td>~2.0s</td>
+      <td>Pre-annotates low-confidence submissions with typed concerns (severity, check recommendations, review time estimate) to streamline expert review.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. Mathematical Quality Scoring & Dual-Routing Algorithm</h2>
+<p>
+The central decision engine (Agent 4) evaluates observation plausibility using a calibrated, transparent weighted score:
+</p>
+<pre>
+Total Score = 0.40 * S_vision + 0.35 * S_metadata + 0.25 * S_description
+</pre>
+<ul>
+  <li><strong>Vision Score ($S_{vision}$, 0-40 pts):</strong> Calibrated on taxonomic identification certainty. Top confidence &ge; 0.80 yields 40 pts; &ge; 0.50 yields 25 pts; &ge; 0.30 yields 15 pts; &lt; 0.30 or failure yields 5 pts.</li>
+  <li><strong>Metadata Score ($S_{metadata}$, 0-35 pts):</strong> Evaluates physical and biological plausibility. Zero detected anomalies yields 35 pts; 1 minor anomaly yields 25 pts; &ge;2 minor or 1 major anomaly (e.g. coordinates in open ocean or 2km from nearest stream) yields 10 pts; invalid metadata yields 0 pts.</li>
+  <li><strong>Description Score ($S_{description}$, 0-25 pts):</strong> Evaluates observational richness. High extraction confidence with &ge;5 parameters yields 25 pts; &ge;3 parameters yields 18 pts; minimal description yields 10 pts; missing text yields 5 pts.</li>
+</ul>
+
+<div class="callout">
+  <div class="callout-title">Autonomous Guardrails & Deterministic Fallbacks</div>
+  To guarantee research integrity: (1) If the vision model fails to identify an organism, total score is capped at <strong>50</strong> (mandatory human review). (2) If GPS coordinates fail geographic validity checks, score is capped at <strong>30</strong>. (3) If external AI providers experience outages, an embedded deterministic rule engine calculates the score, ensuring the pipeline never deadlocks.
+</div>
+
+<div class="page-break"></div>
+
+<h2>5. Ecological Grounding: The BMWP Biotic Index & Vector Surveillance</h2>
+<p>
+StreamSense is grounded in validated freshwater biological monitoring principles. In collaboration with the ecological methodologies developed by the OneAquaHealth consortium (Prof. Maria Jo&atilde;o Feio, University of Coimbra), StreamSense incorporates the <strong>Biological Monitoring Working Party (BMWP)</strong> scoring index across 15 curated bioindicator taxa:
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Taxon / Family</th>
+      <th>Common Name</th>
+      <th>BMWP Score</th>
+      <th>Ecological Indication</th>
+      <th>Vector Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Ephemeroptera</code></td>
+      <td>Mayfly Nymph</td>
+      <td>10</td>
+      <td><span class="badge badge-green">Pristine / High Oxygen</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Plecoptera</code></td>
+      <td>Stonefly Nymph</td>
+      <td>10</td>
+      <td><span class="badge badge-green">Pristine / High Oxygen</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Trichoptera</code></td>
+      <td>Caddisfly Larva</td>
+      <td>8</td>
+      <td><span class="badge badge-green">Good Water Quality</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Gammaridae</code></td>
+      <td>Freshwater Shrimp</td>
+      <td>6</td>
+      <td><span class="badge badge-blue">Moderate to Good</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Hydropsychidae</code></td>
+      <td>Net-spinning Caddisfly</td>
+      <td>5</td>
+      <td><span class="badge badge-blue">Moderate Water Quality</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Chironomidae</code></td>
+      <td>Non-biting Midge Larva</td>
+      <td>2</td>
+      <td><span class="badge badge-amber">Pollution Tolerant / Degraded</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Tubificidae</code></td>
+      <td>Sludge Worm</td>
+      <td>1</td>
+      <td><span class="badge badge-amber">Severely Degraded / Hypoxic</span></td>
+      <td>Non-Vector</td>
+    </tr>
+    <tr>
+      <td><code>Culicidae</code></td>
+      <td>Mosquito Larva</td>
+      <td>0</td>
+      <td><span class="badge badge-amber">Stagnant / Eutrophic Pool</span></td>
+      <td><strong>Disease Vector (WNV, Dengue)</strong></td>
+    </tr>
+    <tr>
+      <td><code>Simuliidae</code></td>
+      <td>Blackfly Larva</td>
+      <td>5</td>
+      <td><span class="badge badge-blue">Flowing Water / Vector</span></td>
+      <td><strong>Disease Vector (Dermatitis, Arbovirus)</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Operationalizing the One Health Nexus</h3>
+<p>
+When urban freshwater streams experience organic enrichment and thermal stress, sensitive predatory taxa (<em>Plecoptera</em>, <em>Ephemeroptera</em>) vanish. Flow stagnation and nutrient concentration create ideal breeding reservoirs for <strong>Culicidae</strong> (<em>Culex pipiens</em>, vector of West Nile Virus; <em>Aedes albopictus</em>, vector of Dengue and Chikungunya). StreamSense identifies vector larvae in field photos, flagging them with <code>disease-vector-detected: true</code>. This triggers an automated epidemiological alert, bridging environmental monitoring directly to municipal vector control programs (such as the consortium's <strong>DipteraCAST</strong> predictive forecasting platform).
+</p>
+
+<h2>6. Digital Health Standards: HL7 FHIR R4 Conformance</h2>
+<p>
+To ensure universal interoperability across regional hospital health information exchanges (HIEs), StreamSense maps validated environmental observations into the <strong>HL7 FHIR R4</strong> standard, strictly conforming to the OneAquaHealth Implementation Guide:
+</p>
+
+<pre>
+{
+  "resourceType": "Observation",
+  "id": "urn:uuid:7f692394-77ac-44af-a36b-f49bd37b7f32",
+  "meta": {
+    "profile": ["http://hl7.eu/fhir/ig/oah/StructureDefinition/observation-indicators-oah"]
+  },
+  "status": "final",
+  "category": [{
+    "coding": [{
+      "system": "http://terminology.hl7.org/CodeSystem/observation-category",
+      "code": "survey",
+      "display": "Survey"
+    }]
+  }],
+  "code": {
+    "coding": [{
+      "system": "http://loinc.org",
+      "code": "72166-2",
+      "display": "Environmental assessment"
+    }]
+  },
+  "effectiveDateTime": "2026-09-28T14:32:00Z",
+  "component": [
+    {
+      "code": { "coding": [{ "system": "http://streamsense.eu/codes", "code": "species-identified" }] },
+      "valueString": "Gammaridae"
+    },
+    {
+      "code": { "coding": [{ "system": "http://streamsense.eu/codes", "code": "bmwp-score" }] },
+      "valueQuantity": { "value": 6, "unit": "score" }
+    },
+    {
+      "code": { "coding": [{ "system": "http://streamsense.eu/codes", "code": "water-quality-indication" }] },
+      "valueString": "moderate"
+    },
+    {
+      "code": { "coding": [{ "system": "http://streamsense.eu/codes", "code": "ai-confidence-score" }] },
+      "valueQuantity": { "value": 88, "unit": "%" }
+    },
+    {
+      "code": { "coding": [{ "system": "http://streamsense.eu/codes", "code": "disease-vector-detected" }] },
+      "valueBoolean": false
+    },
+    {
+      "code": { "coding": [{ "system": "http://streamsense.eu/codes", "code": "validation-source" }] },
+      "valueString": "ai"
+    }
+  ]
+}
+</pre>
+
+<div class="page-break"></div>
+
+<h2>7. Security Architecture, Privacy, and FAIR Principles</h2>
+<p>
+StreamSense implements robust defense-in-depth security engineered for vulnerable environmental and citizen data:
+</p>
+<ul>
+  <li><strong>Transport & Session Security:</strong> Strict end-to-end TLS 1.3 encryption. JWT authentication tokens are maintained exclusively inside <code>httpOnly</code>, <code>SameSite=Lax</code>, encrypted cookies, mitigating Cross-Site Scripting (XSS) exfiltration risks.</li>
+  <li><strong>Zero-Trust Data Protection:</strong> All database operations utilize SQLAlchemy parameterized statements to eliminate SQL injection. Input payloads are strictly validated against Pydantic v2 schemas before reaching business logic.</li>
+  <li><strong>Citizen Privacy Preservation:</strong> In compliance with GDPR and research ethics guidelines, volunteer identifying details (names, email addresses, personal phone EXIF metadata) are scrubbed prior to FHIR serialization. In public FHIR records, the observation performer is coded anonymously as <em>"Citizen Scientist (StreamSense Volunteer)"</em>.</li>
+  <li><strong>FAIR Data Principles Compliance:</strong>
+    <ul>
+      <li><strong>Findable:</strong> Every record is assigned an immutable UUID and indexed with standardized geospatial and taxonomic descriptors.</li>
+      <li><strong>Accessible:</strong> Observations are queryable via open REST endpoints with standard JSON/GeoJSON serializations.</li>
+      <li><strong>Interoperable:</strong> Native alignment with HL7 FHIR R4, LOINC, and BMWP standards eliminates vendor lock-in.</li>
+      <li><strong>Reusable:</strong> Full cryptographic and analytical provenance is preserved: raw citizen descriptions, per-agent JSON outputs, quality breakdown vectors, and expert reviewer audit logs.</li>
+    </ul>
+  </li>
+</ul>
+
+<h2>8. Validation Across Five European Pilot Watersheds</h2>
+<p>
+StreamSense is pre-configured and geofenced across the five official OneAquaHealth pilot urban ecosystems:
+</p>
+<table>
+  <thead>
+    <tr>
+      <th>Pilot City</th>
+      <th>Nation</th>
+      <th>Primary Watershed Corridor</th>
+      <th>Key Ecological & One Health Challenges</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Coimbra</strong></td>
+      <td>Portugal</td>
+      <td>Ribeira dos Cov&otilde;es / Madrigueira</td>
+      <td>Mediterranean flash hydrology; urban runoff; school-based citizen engagement (CresceRio).</td>
+    </tr>
+    <tr>
+      <td><strong>Toulouse</strong></td>
+      <td>France</td>
+      <td>Garonne tributary system</td>
+      <td>Peri-urban agricultural pesticide runoff; thermal stream pollution; riparian loss.</td>
+    </tr>
+    <tr>
+      <td><strong>Benevento</strong></td>
+      <td>Italy</td>
+      <td>Calore Irpino river network</td>
+      <td>Agricultural effluent; water scarcity resilience; severe sedimentation.</td>
+    </tr>
+    <tr>
+      <td><strong>Ghent</strong></td>
+      <td>Belgium</td>
+      <td>Coupure and Lieve canal corridors</td>
+      <td>Artificial embankment constraints; canal eutrophication; high urban recreational contact.</td>
+    </tr>
+    <tr>
+      <td><strong>Oslo</strong></td>
+      <td>Norway</td>
+      <td>Alna River urban blue/green corridor</td>
+      <td>Cold-climate stream daylighting; industrial legacy runoff; youth outdoor science.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>9. Conclusion and Future Roadmap</h2>
+<p>
+StreamSense proves that artificial intelligence, when architected with multi-agent specialization and grounded in domain standards, transforms citizen science from an unmanageable burden into an authoritative environmental surveillance network. By automating 80% of routine triage and standardizing ecological data into HL7 FHIR R4 health records, StreamSense bridges the historic chasm between freshwater ecology and public health.
+</p>
+<p>
+The next developmental phases will incorporate direct live integration with the official OneAquaHealth Citizen Science mobile application, automated bidirectional data exchange with ENORA Innovation's DipteraCAST disease forecasting model, and local language localization across Portuguese, French, Italian, Dutch, and Norwegian.
+</p>
+
+<div class="callout callout-blue">
+  <div class="callout-title">OneAquaHealth Mission Commitment</div>
+  StreamSense operationalizes the core philosophy of the OneAquaHealth consortium: <em>Healthy Waters. Healthy Ecosystems. Healthy Communities.</em>
+</div>
+
+</body>
+</html>

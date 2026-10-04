@@ -124,9 +124,9 @@ The pipeline consists of seven specialized agents orchestrated through a paralle
     | Vision         |  | Description  |  | Metadata        |
     | Analyzer       |  | Interpreter  |  | Validator       |
     |                |  |              |  |                  |
-    | Gemini 2.5     |  | Groq Llama   |  | Groq Llama      |
-    | Flash multi-   |  | 3.3 70B      |  | 3.3 70B         |
-    | modal vision   |  |              |  |                  |
+    | Gemini 3 Flash |  | Groq Qwen    |  | Groq Qwen       |
+    | multi-modal    |  | 3.8 27B      |  | 3.8 27B         |
+    | vision         |  |              |  |                  |
     |                |  | Extracts 14  |  | Checks GPS,     |
     | Identifies     |  | environmental|  | timestamp,       |
     | macroinverte-  |  | parameters   |  | GBIF occurrence, |
@@ -141,7 +141,7 @@ The pipeline consists of seven specialized agents orchestrated through a paralle
                     | Agent 4               |
                     | Quality Scorer        |
                     |                       |
-                    | Gemini 2.0 Flash      |
+                    | Gemini 3 Flash        |
                     |                       |
                     | Weighted aggregation: |
                     |  Vision:     40%      |
@@ -165,8 +165,8 @@ The pipeline consists of seven specialized agents orchestrated through a paralle
   | FHIR       |  | Impact    |  | Expert     |  | Impact    |
   | Translator |  | Generator |  | Brief Gen  |  | Generator |
   |            |  |           |  |            |  |           |
-  | Gemini 2.0 |  | Groq      |  | Gemini 2.0 |  | Groq      |
-  | Flash      |  | Llama 3.3 |  | Flash      |  | Llama 3.3 |
+  | Gemini 3   |  | Groq Qwen |  | Gemini 3   |  | Groq Qwen |
+  | Flash      |  | 3.8 27B   |  | Flash      |  | 3.8 27B   |
   |            |  |           |  |            |  |           |
   | Converts   |  | Writes    |  | Generates  |  | Writes    |
   | to FHIR R4 |  | citizen-  |  | expert     |  | citizen-  |
@@ -181,13 +181,13 @@ The pipeline consists of seven specialized agents orchestrated through a paralle
 
 | Agent | Name | Model | Latency | Input | Output |
 |-------|------|-------|---------|-------|--------|
-| 1 | Vision Analyzer | Gemini 2.5 Flash (multimodal) | ~2s | JPEG/PNG photo | Species ID, confidence 0-1, BMWP score, common name |
-| 2 | Description Interpreter | Groq Llama-3.3-70B | <500ms | Free-text string | 14 structured parameters (water color, clarity, flow, odor, algae, debris, etc.) |
-| 3 | Metadata Validator | Groq Llama-3.3-70B | <800ms | GPS + timestamp + weather + GBIF data | Anomaly list, GPS validity, species plausibility, overall validity rating |
-| 4 | Quality Scorer | Gemini 2.0 Flash | ~2s | Outputs of agents 1-3 | Score 0-100, routing decision, breakdown, key concerns |
-| 5 | FHIR Translator | Gemini 2.0 Flash | ~2s | Validated observation data | FHIR R4 Observation resource (OAH profile) |
-| 6 | Impact Generator | Groq Llama-3.3-70B | <500ms | Species + quality + routing | 4-field impact receipt (headline, text, ecological insight, health connection) |
-| 7 | Expert Brief Generator | Gemini 2.0 Flash | ~2s | All pipeline outputs | Structured brief with typed concerns, severity, check recommendations |
+| 1 | Vision Analyzer | Gemini 3 Flash series (gemini-3.8-flash / 3.7 / 3.5-lite) | ~2s | JPEG/PNG photo | Species ID, confidence 0-1, BMWP score, common name |
+| 2 | Description Interpreter | Groq (qwen/qwen3.8-27b) | <500ms | Free-text string | 14 structured parameters (water color, clarity, flow, odor, algae, debris, etc.) |
+| 3 | Metadata Validator | Groq (qwen/qwen3.8-27b) + APIs | <800ms | GPS + timestamp + weather + GBIF data | Anomaly list, GPS validity, species plausibility, overall validity rating |
+| 4 | Quality Scorer | Gemini 3 Flash (3.8 / 3.7) | ~2s | Outputs of agents 1-3 | Score 0-100, routing decision, breakdown, key concerns |
+| 5 | FHIR Translator | Gemini 3 Flash (3.8 / 3.7) | ~2s | Validated observation data | FHIR R4 Observation resource (OAH profile) |
+| 6 | Impact Generator | Groq (qwen/qwen3.8-27b) | <500ms | Species + quality + routing | 4-field impact receipt (headline, text, ecological insight, health connection) |
+| 7 | Expert Brief Generator | Gemini 3 Flash (3.8 / 3.7) | ~2s | All pipeline outputs | Structured brief with typed concerns, severity, check recommendations |
 
 ### Execution Timing
 
@@ -451,9 +451,9 @@ The DipteraCAST integration (currently mocked for the hackathon) demonstrates th
 | Database | Supabase PostgreSQL 15 | Primary data store |
 | Object storage | Supabase Storage | Observation photo storage |
 | Authentication | Supabase Auth | Google OAuth + email/password, JWT |
-| AI (vision) | Google Gemini 2.5 Flash | Multimodal species identification |
-| AI (reasoning) | Google Gemini 2.0 Flash | Quality scoring, FHIR translation, expert briefs |
-| AI (fast inference) | Groq (Llama-3.3-70B) | Description parsing, metadata validation, impact generation |
+| AI (vision) | Google Gemini 3 Flash series (gemini-3.8-flash, 3.7, 3.5-lite) | Multimodal species identification |
+| AI (reasoning) | Google Gemini 3 Flash series (gemini-3.8-flash, 3.7) | Quality scoring, FHIR translation, expert briefs |
+| AI (fast inference) | Groq (qwen/qwen3.8-27b) | Description parsing, metadata validation, impact generation |
 | Migrations | Alembic | Database schema versioning |
 | Package manager (Python) | uv | Dependency resolution and virtual environments |
 | Package manager (JS) | pnpm | Frontend dependency management |
