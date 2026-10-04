@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, LogOut, Waves } from "lucide-react"
+import { Menu, LogOut } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { Sidebar } from "@/components/shared/sidebar"
 import { ResearcherSidebar } from "@/components/shared/researcher-sidebar"
@@ -47,8 +47,12 @@ export function Header({ user }: { user: User }) {
         </Sheet>
 
         {/* Brand — only on mobile (sidebar has it on desktop) */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <Waves className="h-5 w-5 text-stream-600" />
+        <div className="flex items-center gap-2.5 lg:hidden">
+          <img
+            src="/logo.png"
+            alt="StreamSense logo"
+            className="h-7 w-7 object-contain"
+          />
           <span className="font-display text-base text-stone-900">
             StreamSense
           </span>

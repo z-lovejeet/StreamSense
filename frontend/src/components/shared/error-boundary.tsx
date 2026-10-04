@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { Waves, RefreshCw } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -46,8 +46,12 @@ export class ErrorBoundary extends React.Component<
       return (
         <div className="flex min-h-[60vh] items-center justify-center p-8">
           <div className="max-w-sm text-center space-y-4">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-cozy-xl bg-stream-50">
-              <Waves className="h-7 w-7 text-stream-400" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-2 shadow-cozy ring-1 ring-stone-200">
+              <img
+                src="/logo.png"
+                alt="StreamSense logo"
+                className="h-full w-full object-contain"
+              />
             </div>
             <h2 className="font-display text-xl text-stone-800">
               Something went wrong

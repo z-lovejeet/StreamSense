@@ -7,7 +7,6 @@ import {
   Shield,
   Globe,
   ArrowRight,
-  Waves,
   Microscope,
   Activity,
 } from "lucide-react"
@@ -79,8 +78,12 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-3xl text-center">
           {/* Logo */}
           <div className="mb-8 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-cozy-xl bg-stream-100 shadow-cozy-sm">
-              <Waves className="h-8 w-8 text-stream-600" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-2.5 shadow-cozy-lg ring-1 ring-stone-200/80">
+              <img
+                src="/logo.png"
+                alt="StreamSense logo"
+                className="h-full w-full object-contain"
+              />
             </div>
           </div>
 
@@ -262,9 +265,13 @@ export default function HomePage() {
       {/* ─── FOOTER ─── */}
       <footer className="border-t border-stone-100 px-6 py-8 sm:px-8">
         <div className="mx-auto max-w-4xl flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-          <div className="flex items-center gap-2">
-            <Waves className="h-4 w-4 text-stream-500" />
-            <span className="text-sm font-medium text-stone-700">
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.png"
+              alt="StreamSense logo"
+              className="h-6 w-6 object-contain"
+            />
+            <span className="text-sm font-semibold text-stone-800">
               StreamSense
             </span>
           </div>

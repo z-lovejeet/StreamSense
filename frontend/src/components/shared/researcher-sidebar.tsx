@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   BarChart3,
   HeartPulse,
-  Waves,
 } from "lucide-react"
 import { api } from "@/lib/api"
 
@@ -51,10 +50,12 @@ export function ResearcherSidebar() {
   return (
     <div className="flex h-full flex-col bg-stone-900">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 px-6 py-5 border-b border-stone-700/50">
-        <div className="h-9 w-9 rounded-cozy bg-stream-600/20 flex items-center justify-center">
-          <Waves className="h-5 w-5 text-stream-400" />
-        </div>
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-stone-700/50">
+        <img
+          src="/logo.png"
+          alt="StreamSense logo"
+          className="h-9 w-9 object-contain"
+        />
         <span className="font-display text-lg text-stone-100">
           StreamSense
         </span>

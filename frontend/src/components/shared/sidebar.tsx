@@ -7,7 +7,6 @@ import {
   Camera,
   ClipboardList,
   MapPin,
-  Waves,
   HeartPulse,
 } from "lucide-react"
 
@@ -31,10 +30,12 @@ export function Sidebar() {
   return (
     <div className="flex h-full flex-col">
       {/* Brand */}
-      <div className="flex items-center gap-2.5 px-6 py-5 border-b border-stone-200">
-        <div className="h-9 w-9 rounded-cozy bg-stream-100 flex items-center justify-center">
-          <Waves className="h-5 w-5 text-stream-600" />
-        </div>
+      <div className="flex items-center gap-3 px-6 py-5 border-b border-stone-200">
+        <img
+          src="/logo.png"
+          alt="StreamSense logo"
+          className="h-9 w-9 object-contain"
+        />
         <span className="font-display text-lg text-stone-900">
           StreamSense
         </span>

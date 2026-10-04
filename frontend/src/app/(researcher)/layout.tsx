@@ -3,7 +3,6 @@
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Loader2 } from "lucide-react"
 import { Header } from "@/components/shared/header"
 import { ResearcherSidebar } from "@/components/shared/researcher-sidebar"
 import { ErrorBoundary } from "@/components/shared/error-boundary"
@@ -34,10 +33,12 @@ export default function ResearcherLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-stone-950">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-stream-500" />
-          <p className="text-sm text-stone-500">Loading StreamSense...</p>
+          <div className="h-12 w-12 rounded-2xl bg-stone-900 p-2 shadow-cozy ring-1 ring-stone-800 flex items-center justify-center animate-pulse">
+            <img src="/logo.png" alt="StreamSense" className="h-full w-full object-contain" />
+          </div>
+          <p className="text-sm font-medium text-stone-400">Loading StreamSense...</p>
         </div>
       </div>
     )

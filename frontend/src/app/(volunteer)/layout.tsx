@@ -1,9 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import { Loader2 } from "lucide-react"
 import { Header } from "@/components/shared/header"
 import { Sidebar } from "@/components/shared/sidebar"
 import { ErrorBoundary } from "@/components/shared/error-boundary"
@@ -33,8 +32,10 @@ export default function VolunteerLayout({
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-stream-500" />
-          <p className="text-sm text-stone-500">Loading StreamSense...</p>
+          <div className="h-12 w-12 rounded-2xl bg-white p-2 shadow-cozy ring-1 ring-stone-200/80 flex items-center justify-center animate-pulse">
+            <img src="/logo.png" alt="StreamSense" className="h-full w-full object-contain" />
+          </div>
+          <p className="text-sm font-medium text-stone-500">Loading StreamSense...</p>
         </div>
       </div>
     )

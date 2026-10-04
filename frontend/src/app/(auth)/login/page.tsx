@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
-import { Loader2, Waves } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 /**
  * Login page — OAuth sign-in with Google and GitHub.
@@ -33,8 +33,12 @@ export default function LoginPage() {
     <div className="bg-surface rounded-cozy-lg shadow-cozy border border-stone-100 p-8 space-y-6">
       {/* Logo */}
       <div className="flex justify-center">
-        <div className="h-14 w-14 rounded-cozy-lg bg-stream-100 flex items-center justify-center">
-          <Waves className="h-7 w-7 text-stream-600" />
+        <div className="h-16 w-16 rounded-2xl bg-white p-2 shadow-cozy-sm ring-1 ring-stone-200/80 flex items-center justify-center">
+          <img
+            src="/logo.png"
+            alt="StreamSense logo"
+            className="h-full w-full object-contain"
+          />
         </div>
       </div>
 
