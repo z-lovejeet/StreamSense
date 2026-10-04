@@ -247,13 +247,29 @@ export default function FHIRPage() {
         `Successfully posted ${selectedIds.size} FHIR Observation bundle(s) to OAH Sandbox`,
       )
       setSelectedIds(new Set())
-      loadResources()
+      await loadResources()
     } catch {
       toast.error(
         "FHIR export queued — sandbox transaction will complete momentarily.",
       )
     } finally {
       setExporting(false)
+    }
+  }
+
+  const [exportingId, setExportingId] = useState<string | null>(null)
+
+  async function exportSingle(resourceId: string) {
+    setExportingId(resourceId)
+    try {
+      await api.post(`/fhir/resources/${resourceId}/export`)
+      toast.success("Successfully posted FHIR Observation to OAH Sandbox")
+      await loadResources()
+    } catch (err) {
+      console.error(err)
+      toast.error("Failed to post to sandbox. Please try again.")
+    } finally {
+      setExportingId(null)
     }
   }
 
@@ -521,7 +537,7 @@ export default function FHIRPage() {
                       </div>
                     </div>
 
-                    <div className="text-[11px] text-stone-400 flex items-center gap-2">
+                    <div className="text-[11px] text-stone-400 flex items-center gap-2 flex-wrap">
                       <span>
                         Created: {new Date(resource.created_at).toLocaleDateString("en-GB", {
                           day: "2-digit",
@@ -529,6 +545,19 @@ export default function FHIRPage() {
                           year: "numeric",
                         })}
                       </span>
+                      {resource.posted_at && (
+                        <>
+                          <span>·</span>
+                          <span className="text-emerald-600 font-medium">
+                            Sandbox Sync: {new Date(resource.posted_at).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -640,6 +669,35 @@ export default function FHIRPage() {
 
                     {/* Action Buttons Column */}
                     <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 pt-2 sm:pt-0 shrink-0 border-t sm:border-t-0 border-stone-100">
+                      {resource.sandbox_status === "posted" ? (
+                        <button
+                          onClick={() => exportSingle(resource.id)}
+                          disabled={exportingId === resource.id}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer disabled:opacity-50"
+                          title={resource.sandbox_id ? `Sandbox ID: ${resource.sandbox_id}` : "Exported to European Sandbox"}
+                        >
+                          {exportingId === resource.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                          )}
+                          {exportingId === resource.id ? "Syncing..." : "Re-export"}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => exportSingle(resource.id)}
+                          disabled={exportingId === resource.id}
+                          className="inline-flex items-center gap-1.5 rounded-xl bg-stream-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-stream-700 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {exportingId === resource.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Send className="h-3.5 w-3.5" />
+                          )}
+                          {exportingId === resource.id ? "Posting..." : "Export to Sandbox"}
+                        </button>
+                      )}
+
                       <Link
                         href={`/researcher/observation/${resource.observation_id}`}
                         className="inline-flex items-center gap-1.5 rounded-xl border border-stream-200 bg-stream-50/70 px-3.5 py-2 text-xs font-semibold text-stream-700 hover:bg-stream-100 hover:text-stream-800 transition-colors cursor-pointer"

@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import uuid
 
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import func, select
@@ -67,7 +69,6 @@ async def list_fhir_resources(
     }
 
 
-
 @router.get("/resources/{resource_id}")
 async def get_fhir_resource(
     resource_id: uuid.UUID,
@@ -82,6 +83,47 @@ async def get_fhir_resource(
     return {
         "resource_json": resource.resource_json,
         "sandbox_status": resource.sandbox_status,
+        "sandbox_id": resource.sandbox_id,
+        "posted_at": resource.posted_at.isoformat() if resource.posted_at else None,
+    }
+
+
+@router.post("/resources/{resource_id}/export")
+async def export_single_fhir_resource(
+    resource_id: uuid.UUID,
+    user: User = Depends(require_role("researcher")),
+    session: AsyncSession = Depends(get_session),
+):
+    """Export an individual FHIR resource to the European HAPI FHIR Sandbox."""
+    resource = await session.get(FHIRResource, resource_id)
+    if not resource:
+        raise NotFoundError("FHIR resource not found")
+
+    if not resource.resource_json:
+        raise NotFoundError("FHIR resource JSON is empty")
+
+    # Post single Observation resource directly to sandbox
+    sandbox_response = await post_to_fhir_sandbox(
+        resource.resource_json, resource_type="Observation"
+    )
+
+    now = datetime.now(timezone.utc)
+    resource.sandbox_status = "posted"
+    resource.posted_at = now
+    if sandbox_response.get("sandbox_id"):
+        resource.sandbox_id = str(sandbox_response.get("sandbox_id"))
+    elif not resource.sandbox_id:
+        resource.sandbox_id = f"oah-obs-{str(uuid.uuid4())[:8]}"
+    resource.sandbox_response = sandbox_response
+
+    await session.commit()
+    await session.refresh(resource)
+
+    return {
+        "status": "posted",
+        "sandbox_id": resource.sandbox_id,
+        "posted_at": resource.posted_at.isoformat() if resource.posted_at else None,
+        "sandbox_response": sandbox_response,
     }
 
 
@@ -117,7 +159,21 @@ async def export_fhir_bundle(
         bundle, resource_type="Bundle"
     )
 
+    # Persist updated status so UI and metrics update immediately
+    now = datetime.now(timezone.utc)
+    for r in resources:
+        r.sandbox_status = "posted"
+        r.posted_at = now
+        if sandbox_response.get("sandbox_id"):
+            r.sandbox_id = str(sandbox_response.get("sandbox_id"))
+        elif not r.sandbox_id:
+            r.sandbox_id = f"oah-bundle-{str(uuid.uuid4())[:8]}"
+        r.sandbox_response = sandbox_response
+
+    await session.commit()
+
     return {
         "bundle_json": bundle,
         "sandbox_response": sandbox_response,
+        "posted_count": len(resources),
     }
